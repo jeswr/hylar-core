@@ -5,8 +5,6 @@
 
 import { Store } from 'n3';
 import { namedNode, quad } from '@rdfjs/data-model';
-import { newEngine } from '@comunica/actor-init-sparql-rdfjs';
-import { Parser } from 'sparqljs'
 import { owl2rl as rules } from '../lib/Rules';
 import * as Solver from '../lib/Logics/Solver';
 import Fact from '../lib/Logics/Fact';
@@ -67,21 +65,7 @@ describe('Store integration tests', () => {
     const { implicit, explicit } = factsToQuads(r.additions);
     storeImplicit.addQuads(implicit);
 
-    // const myEngine = newEngine();
-    // const result = await myEngine.query('CONSTRUCT { ?s <http://example.org/myPredicate> ?o } WHERE { ?s ?p ?o } LIMIT 100',
-    //   { sources: [storeExplicit, storeImplicit] });
-
-    // const parser = new Parser();
-    // const algebra = parser.parse('CONSTRUCT { ?s <http://example.org/myPredicate> ?o . ?a ?r ?g } WHERE { ?s ?p ?o ) } LIMIT 100')
-
-    // console.log(algebra)
-
     expect(implicit.length).toEqual(2);
     expect(explicit.length).toEqual(1);
-    // @ts-ignore
-    console.log(await result.quads());
   });
 });
-
-// STRUCTURE: Two data sorea
-function 
