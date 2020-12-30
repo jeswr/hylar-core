@@ -10,7 +10,8 @@
   "scripts": {
     "test": "jest",
     "build": "tsc",
-    "lint": "eslint lib/* --ext .ts --fix"
+    "lint": "eslint lib/* --ext .ts --fix",
+    "pre-commit": "tsc"
   },
   "keywords": [
     "OWL",
