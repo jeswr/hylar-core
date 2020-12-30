@@ -1,0 +1,9 @@
+{
+  "name": "arrayify-stream",
+  "version": "1.0.0",
+  "description": "Converts a Node readable stream into an array",
+  "main": "index.js",
+  "repository": "git@github.com:rubensworks/arrayify-stream.js.git",
+  "author": "Ruben Taelman <rubensworks@gmail.com>",
+  "license": "MIT"
+}

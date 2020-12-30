@@ -1,0 +1,41 @@
+{
+  "name": "hylar-core",
+  "version": "1.0.0",
+  "description": "A lightweight module containing core reasoner logic from HyLAR (https://github.com/ucbl/HyLAR-Reasoner.git)",
+  "main": "lib/Reasoner.ts",
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint lib/* --ext .ts --fix"
+  },
+  "keywords": [
+    "OWL",
+    "Reasoner",
+    "HyLAR"
+  ],
+  "author": "Jesse Wright <jesse.wright@anu.edu.au>",
+  "license": "MIT",
+  "devDependencies": {
+    "@comunica/actor-init-sparql": "^1.18.1",
+    "@comunica/actor-init-sparql-rdfjs": "^1.18.1",
+    "@rdfjs/data-model": "^1.2.0",
+    "@types/jest": "^26.0.19",
+    "@types/n3": "^1.4.4",
+    "@typescript-eslint/eslint-plugin": "^4.11.1",
+    "@typescript-eslint/parser": "^4.11.1",
+    "eslint": "^7.16.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "n3": "^1.6.4",
+    "sparqljs": "^3.2.0",
+    "ts-jest": "^26.4.4"
+  },
+  "jest": {
+    "preset": "ts-jest"
+  },
+  "dependencies": {
+    "md5": "^2.3.0"
+  }
+}
