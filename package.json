@@ -11,7 +11,7 @@
     "test": "jest",
     "build": "tsc",
     "lint": "eslint lib/* --ext .ts --fix",
-    "pre-commit": "tsc"
+    "prepare": "tsc"
   },
   "keywords": [
     "OWL",
