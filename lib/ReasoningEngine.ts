@@ -66,7 +66,13 @@ export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
  * @param FactImplicit set of assertions (implicit)
  * @param R set of rules
  */
-export async function incremental(FeAdd: Fact[], FeDel?: Fact[], FactExplicit?: Fact[], FactImplicit?: Fact[], R?: Rule[]):
+export async function incremental(
+  FeAdd: Fact[],
+  FeDel?: Fact[],
+  FactExplicit?: Fact[],
+  FactImplicit?: Fact[],
+  R?: Rule[],
+):
   Promise<{ additions: Fact[], deletions: Fact[] }> {
   return new Promise((resolve) => {
     let Rdel = [];
@@ -128,7 +134,6 @@ export async function incremental(FeAdd: Fact[], FeDel?: Fact[], FactExplicit?: 
           } else {
             additions = Utils.uniques(FeAdd, FiAdd);
             deletions = Utils.uniques(FeDel, FiDel);
-            // console.log(additions)
             resolve({
               additions,
               deletions,

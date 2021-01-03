@@ -1,9 +1,9 @@
-// @ts-nocheck
 /*
  * Created by MT on 20/11/2015.
  */
 
-import { quad, Quad } from '@rdfjs/data-model';
+import { quad } from '@rdfjs/data-model';
+import { Quad } from 'rdf-js';
 import Fact from './Logics/Fact';
 
 /**
@@ -30,8 +30,8 @@ export function quadToFact(t: Quad, explicit = true): Fact {
   );
 }
 
-export function quadsToFacts(t: Quad[], explicit?: boolean = true, notUsingValid?: boolean): Fact[] {
-  return t.map((triple) => quadToFact(triple, explicit, notUsingValid));
+export function quadsToFacts(t: Quad[], explicit: boolean = true): Fact[] {
+  return t.map((triple) => quadToFact(triple, explicit));
 }
 
 export function factsToQuads(facts: Fact[]): { implicit: Quad[], explicit: Quad[] } {
