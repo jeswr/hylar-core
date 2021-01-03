@@ -3,7 +3,7 @@
  * Created by MT on 20/11/2015.
  */
 
-import { quad } from '@rdfjs/data-model';
+import { quad, Quad } from '@rdfjs/data-model';
 import Fact from './Logics/Fact';
 
 /**
@@ -19,7 +19,7 @@ import Fact from './Logics/Fact';
   * @param explicit True if the resulting fact is explicit, false otherwise (default: true)
   * @returns Object resulting fact
   */
-export function tripleToFact(t, explicit = true) {
+export function quadToFact(t: Quad, explicit = true): Fact {
   return new Fact(
     t.predicate.value,
     t.subject.value,
@@ -30,13 +30,13 @@ export function tripleToFact(t, explicit = true) {
   );
 }
 
-export function triplesToFacts(t, explicit?: boolean = true, notUsingValid?: boolean) {
-  return t.map((triple) => tripleToFact(triple, explicit, notUsingValid));
+export function quadsToFacts(t: Quad[], explicit?: boolean = true, notUsingValid?: boolean): Fact[] {
+  return t.map((triple) => quadToFact(triple, explicit, notUsingValid));
 }
 
-export function factsToQuads(facts: Fact[]) {
-  const implicit = [];
-  const explicit = [];
+export function factsToQuads(facts: Fact[]): { implicit: Quad[], explicit: Quad[] } {
+  const implicit: Quad[] = [];
+  const explicit: Quad[] = [];
   for (const fact of facts) {
     if (fact.graphs.length > 0) {
       for (const graph of fact.graphs) {

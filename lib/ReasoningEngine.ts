@@ -4,7 +4,9 @@
  * Created by Spadon on 11/09/2015.
  */
 
+import Fact from './Logics/Fact';
 import * as Logics from './Logics/Logics';
+import Rule from './Logics/Rule';
 import * as Solver from './Logics/Solver';
 import * as Utils from './Utils';
 
@@ -21,7 +23,7 @@ import * as Utils from './Utils';
  * @param rules
  * @returns {{fi: *, fe: *}}
  */
-export async function naive(FeAdd, FeDel, F, R) {
+export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
   let FiAdd = [];
   let Fe = Logics.getOnlyExplicitFacts(F);
   let FiAddNew;
@@ -43,8 +45,8 @@ export async function naive(FeAdd, FeDel, F, R) {
     FiAddNew = await Solver.evaluateRuleSet(R, Utils.uniques(Fe, FiAdd));
   } while (!Logics.containsFacts(FiAdd, FiAddNew));
 
-  const additions = Utils.uniques(FeAdd, FiAdd);
-  const deletions = Logics.minus(F, Utils.uniques(Fe, FiAdd));
+  const additions: Fact[] = Utils.uniques(FeAdd, FiAdd);
+  const deletions: Fact[] = Logics.minus(F, Utils.uniques(Fe, FiAdd));
 
   F = Utils.uniques(Fe, FiAdd);
 
@@ -58,13 +60,14 @@ export async function naive(FeAdd, FeDel, F, R) {
 /**
  * Incremental reasoning which avoids complete recalculation of facts.
  * Concat is preferred over merge for evaluation purposes.
- * @param R set of rules
- * @param F set of assertions
  * @param FeAdd set of assertions to be added
  * @param FeDel set of assertions to be deleted
+ * @param FactExplicit set of assertions (explicit)
+ * @param FactImplicit set of assertions (implicit)
+ * @param R set of rules
  */
-export async function incremental(FeAdd, FeDel?, F?, R?):
-  Promise<{ additions: any, deletions: any }> {
+export async function incremental(FeAdd: Fact[], FeDel?: Fact[], FactExplicit?: Fact[], FactImplicit?: Fact[], R?: Rule[]):
+  Promise<{ additions: Fact[], deletions: Fact[] }> {
   return new Promise((resolve) => {
     let Rdel = [];
     let Rred = [];
@@ -76,8 +79,8 @@ export async function incremental(FeAdd, FeDel?, F?, R?):
     let superSet = [];
     let additions;
     let deletions;
-    let Fe = Logics.getOnlyExplicitFacts(F);
-    let Fi = Logics.getOnlyImplicitFacts(F);
+    let Fe = FactExplicit;
+    let Fi = FactImplicit;
 
     function startAlgorithm() {
       overDeletionEvaluationLoop();

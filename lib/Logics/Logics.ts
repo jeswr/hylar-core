@@ -61,8 +61,8 @@ export function getOnlyImplicitFacts(fs) {
  * @param fs
  * @returns {Array}
  */
-export function getOnlyExplicitFacts(fs) {
-  const fR = [];
+export function getOnlyExplicitFacts(fs: { [key: string]: Fact }): Fact[] {
+  const fR: Fact[] = [];
   for (const key in fs) {
     const fact = fs[key];
     if (fact.explicit) {
@@ -354,8 +354,8 @@ export function uniquesCausedBy(cb1, cb2) {
   return newCb.concat(min.slice());
 }
 
-export function parseRules(strRuleList, entailment = Rule.types.CUSTOM) {
-  const parsedRuleList = [];
+export function parseRules(strRuleList: string[], entailment = Rule.types.CUSTOM): Rule[] {
+  const parsedRuleList: Rule[] = [];
   for (let i = 0; i < strRuleList.length; i++) {
     const match = strRuleList[i].match('(.+)=(.+)');
     if (match) {

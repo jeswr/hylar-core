@@ -10,7 +10,7 @@ import * as Solver from '../lib/Logics/Solver';
 import Fact from '../lib/Logics/Fact';
 import * as ReasoningEngine from '../lib/ReasoningEngine';
 
-import { factsToQuads, triplesToFacts } from '../lib/ParsingInterface';
+import { factsToQuads, quadsToFacts } from '../lib/ParsingInterface';
 
 describe('Rule tests', () => {
   it('should order the rule causes (most to least restrictive)', () => {
@@ -30,7 +30,7 @@ describe('Solver tests', () => {
       new Fact('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', '#parentOf', 'http://www.w3.org/2002/07/owl#TransitiveProperty', [], true),
     ];
 
-    const { additions } = await ReasoningEngine.incremental(facts, [], [], rules);
+    const { additions } = await ReasoningEngine.incremental(facts, [], [], [], rules);
     expect(additions.length).toEqual(7);
   });
   it('should return inference wrt. transitivity rule', () => {
@@ -59,7 +59,7 @@ describe('Store integration tests', () => {
   // TODO: Merge quads into appropriate graphs format
   it('should work', async () => {
     const r = await ReasoningEngine.incremental(
-      triplesToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), namedNode('http://example.org/mammal'))]), [], triplesToFacts(storeExplicit.getQuads(null, null, null, null)), rules,
+      quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), namedNode('http://example.org/mammal'))]), [], quadsToFacts(storeExplicit.getQuads(null, null, null, null)), [], rules,
     );
 
     const { implicit, explicit } = factsToQuads(r.additions);
