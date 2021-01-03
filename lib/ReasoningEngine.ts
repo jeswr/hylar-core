@@ -202,3 +202,13 @@ export function tagging(FeAdd, FeDel, F, R) {
     startAlgorithm();
   });
 }
+
+export function updateRuleDependencies(ruleSet) {
+  for (const rule of ruleSet) {
+    for (const depRule of ruleSet) {
+      if (rule.dependsOn(depRule)) {
+        depRule.addDependentRule(rule);
+      }
+    }
+  }
+}
