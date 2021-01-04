@@ -3,14 +3,18 @@
  * Created by aifb on 15.03.16.
  */
 
+
+// TODO: FIX THE TO STRING FUNCTION SO THAT WE CAN WORK WITH LITERALS
+
 import { Store } from 'n3';
-import { namedNode, quad } from '@rdfjs/data-model';
+import { namedNode, quad, literal } from '@rdfjs/data-model';
 import { owl2rl as rules } from '../lib/Rules';
 import * as Solver from '../lib/Logics/Solver';
 import Fact from '../lib/Logics/Fact';
 import * as ReasoningEngine from '../lib/ReasoningEngine';
 
 import { factsToQuads, quadsToFacts } from '../lib/ParsingInterface';
+import { termToString } from 'rdf-string-ttl';
 
 describe('Rule tests', () => {
   it('should order the rule causes (most to least restrictive)', () => {
@@ -67,5 +71,16 @@ describe('Store integration tests', () => {
 
     expect(implicit.length).toEqual(2);
     expect(explicit.length).toEqual(1);
+  });
+
+  it('should handle literals', async () => {
+    const r = await ReasoningEngine.incremental(
+      quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), literal('This is a string'))]), [], [], [], rules,
+    );
+
+    const { implicit, explicit } = factsToQuads(r.additions);
+    // storeImplicit.addQuads(implicit);
+    console.log(termToString( literal('This is a string')))
+    expect(explicit[0].object.termType).toEqual('Literal')
   });
 });

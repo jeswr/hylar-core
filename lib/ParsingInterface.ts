@@ -3,7 +3,8 @@
  */
 
 import { quad } from '@rdfjs/data-model';
-import { Quad } from 'rdf-js';
+import type { Quad } from 'rdf-js';
+import { termToString } from 'rdf-string'
 import Fact from './Logics/Fact';
 
 /**
@@ -21,9 +22,9 @@ import Fact from './Logics/Fact';
   */
 export function quadToFact(t: Quad, explicit = true): Fact {
   return new Fact(
-    t.predicate.value,
-    t.subject.value,
-    t.object.value,
+    termToString(t.predicate),
+    termToString(t.subject),
+    termToString(t.object),
     [],
     explicit,
     t.graph.value ? [t.graph] : [],
