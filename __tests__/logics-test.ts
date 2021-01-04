@@ -3,8 +3,8 @@
  * Created by aifb on 15.03.16.
  */
 
-
-// TODO: FIX THE TO STRING FUNCTION SO THAT WE CAN WORK WITH LITERALS
+// TODO: Break up test files
+// TODO: FIX THE TO STRING FUNCTION SO THAT WE CAN WORK WITH LITERALS - mostly done
 
 import { Store } from 'n3';
 import { namedNode, quad, literal } from '@rdfjs/data-model';
@@ -79,8 +79,6 @@ describe('Store integration tests', () => {
     );
 
     const { implicit, explicit } = factsToQuads(r.additions);
-    // storeImplicit.addQuads(implicit);
-    console.log(termToString( literal('This is a string')))
     expect(explicit[0].object.termType).toEqual('Literal')
   });
 });

@@ -4,7 +4,7 @@
 
 import { quad } from '@rdfjs/data-model';
 import type { Quad } from 'rdf-js';
-import { termToString } from 'rdf-string'
+import { termToString, stringToTerm } from 'rdf-string';
 import Fact from './Logics/Fact';
 
 /**
@@ -43,31 +43,31 @@ export function factsToQuads(facts: Fact[]): { implicit: Quad[], explicit: Quad[
       for (const graph of fact.graphs) {
         if (fact.explicit) {
           explicit.push(quad(
-            fact.subject.toString(),
-            fact.predicate.toString(),
-            fact.object.toString(),
-            graph.toString(),
+            stringToTerm(fact.subject),
+            stringToTerm(fact.predicate),
+            stringToTerm(fact.object),
+            stringToTerm(graph),
           ));
         } else {
           implicit.push(quad(
-            fact.subject.toString(),
-            fact.predicate.toString(),
-            fact.object.toString(),
-            graph.toString(),
+            stringToTerm(fact.subject),
+            stringToTerm(fact.predicate),
+            stringToTerm(fact.object),
+            stringToTerm(graph),
           ));
         }
       }
     } else if (fact.explicit) {
       explicit.push(quad(
-        fact.subject.toString(),
-        fact.predicate.toString(),
-        fact.object.toString(),
+        stringToTerm(fact.subject),
+        stringToTerm(fact.predicate),
+        stringToTerm(fact.object),
       ));
     } else {
       implicit.push(quad(
-        fact.subject.toString(),
-        fact.predicate.toString(),
-        fact.object.toString(),
+        stringToTerm(fact.subject),
+        stringToTerm(fact.predicate),
+        stringToTerm(fact.object),
       ));
     }
   }
