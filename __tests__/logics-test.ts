@@ -14,7 +14,6 @@ import Fact from '../lib/Logics/Fact';
 import * as ReasoningEngine from '../lib/ReasoningEngine';
 
 import { factsToQuads, quadsToFacts } from '../lib/ParsingInterface';
-import { termToString } from 'rdf-string-ttl';
 
 describe('Rule tests', () => {
   it('should order the rule causes (most to least restrictive)', () => {
@@ -78,7 +77,7 @@ describe('Store integration tests', () => {
       quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), literal('This is a string'))]), [], [], [], rules,
     );
 
-    const { implicit, explicit } = factsToQuads(r.additions);
-    expect(explicit[0].object.termType).toEqual('Literal')
+    const { explicit } = factsToQuads(r.additions);
+    expect(explicit[0].object.termType).toEqual('Literal');
   });
 });
