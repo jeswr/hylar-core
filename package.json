@@ -2,17 +2,21 @@
   "name": "hylar-core",
   "version": "1.0.0",
   "description": "A lightweight module containing core reasoner logic from HyLAR (https://github.com/ucbl/HyLAR-Reasoner.git)",
-  "main": "dist/lib/index.js",
-  "types": "dist/lib/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.js",
+  "directories": {
+    "lib": "lib"
+  },
   "files": [
-    "dist/lib/*"
+    "dist"
   ],
   "scripts": {
     "test": "jest",
+    "lint": "eslint lib/* __tests__/* --ext .ts",
+    "lint:fix": "eslint lib/* __tests__/* --ext .ts --fix",
     "build": "tsc",
-    "lint": "eslint lib/* --ext .ts",
-    "lint:fix": "eslint lib/* --ext .ts --fix",
-    "prepare": "tsc"
+    "prepare": "tsc",
+    "semantic-release": "semantic-release"
   },
   "keywords": [
     "OWL",
