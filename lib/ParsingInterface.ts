@@ -3,8 +3,8 @@
  */
 
 import { quad } from '@rdfjs/data-model';
-import type { Quad } from 'rdf-js';
 import { termToString, stringToTerm } from 'rdf-string';
+import type { Quad } from 'rdf-js';
 import Fact from './Logics/Fact';
 
 /**
