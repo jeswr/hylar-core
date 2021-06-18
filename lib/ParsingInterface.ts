@@ -1,10 +1,13 @@
+/* eslint-disable camelcase */
 /*
  * Created by MT on 20/11/2015.
  */
 
 import { quad } from '@rdfjs/data-model';
 import { termToString, stringToTerm } from 'rdf-string';
-import type { Quad } from 'rdf-js';
+import type {
+  Quad, Quad_Graph, Quad_Object, Quad_Predicate, Quad_Subject,
+} from 'rdf-js';
 import Fact from './Logics/Fact';
 
 /**
@@ -39,35 +42,21 @@ export function factsToQuads(facts: Fact[]): { implicit: Quad[], explicit: Quad[
   const implicit: Quad[] = [];
   const explicit: Quad[] = [];
   for (const fact of facts) {
+    const quads = fact.explicit ? explicit : implicit;
     if (fact.graphs.length > 0) {
       for (const graph of fact.graphs) {
-        if (fact.explicit) {
-          explicit.push(quad(
-            stringToTerm(fact.subject),
-            stringToTerm(fact.predicate),
-            stringToTerm(fact.object),
-            stringToTerm(graph),
-          ));
-        } else {
-          implicit.push(quad(
-            stringToTerm(fact.subject),
-            stringToTerm(fact.predicate),
-            stringToTerm(fact.object),
-            stringToTerm(graph),
-          ));
-        }
+        quads.push(quad(
+          stringToTerm(fact.subject) as Quad_Subject,
+          stringToTerm(fact.predicate) as Quad_Predicate,
+          stringToTerm(fact.object) as Quad_Object,
+          stringToTerm(graph) as Quad_Graph,
+        ));
       }
-    } else if (fact.explicit) {
-      explicit.push(quad(
-        stringToTerm(fact.subject),
-        stringToTerm(fact.predicate),
-        stringToTerm(fact.object),
-      ));
     } else {
-      implicit.push(quad(
-        stringToTerm(fact.subject),
-        stringToTerm(fact.predicate),
-        stringToTerm(fact.object),
+      quads.push(quad(
+        stringToTerm(fact.subject) as Quad_Subject,
+        stringToTerm(fact.predicate) as Quad_Predicate,
+        stringToTerm(fact.object) as Quad_Object,
       ));
     }
   }
