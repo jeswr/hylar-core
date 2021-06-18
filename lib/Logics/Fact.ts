@@ -48,7 +48,7 @@ export default class Fact {
     rule: any;
 
     constructor(
-      pred, sub, obj,
+      pred, sub?, obj?,
       causes = [], expl = true, graphs = [],
       consequences = [], notUsingValidity?, fromTriple?,
     ) {
