@@ -378,9 +378,8 @@ export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {
 }
 
 export function _createFactSetFromTriples(triples) {
-  const set = [];
+  const set: Fact[] = [];
   if (triples[0] === 'false') {
-    // @ts-ignore
     set.push(new Fact('FALSE'));
   } else {
     for (let i = 0; i < triples.length; i++) {
