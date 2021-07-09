@@ -26,6 +26,8 @@
   "author": "Jesse Wright <jesse.wright@anu.edu.au>",
   "license": "MIT",
   "devDependencies": {
+    "@on2ts/ontologies-sh": "^1.0.35",
+    "@ontologies/shacl": "^1.0.0",
     "@types/jest": "^26.0.19",
     "@types/n3": "^1.4.4",
     "@types/rdf-js": "^4.0.0",

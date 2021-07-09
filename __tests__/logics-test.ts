@@ -77,7 +77,9 @@ describe('Store integration tests', () => {
       quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), literal('This is a string'))]), [], [], [], rules,
     );
 
-    const { explicit } = factsToQuads(r.additions);
+    const { explicit, implicit } = factsToQuads(r.additions);
     expect(explicit[0].object.termType).toEqual('Literal');
+    expect(explicit[0].object.value).toEqual('This is a string');
+    expect(implicit).toHaveLength(0);
   });
 });
