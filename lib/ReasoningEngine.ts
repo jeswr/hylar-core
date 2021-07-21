@@ -16,48 +16,6 @@ import * as Utils from './Utils';
  */
 
 /**
- * A naive reasoner that recalculates the entire knowledge base.
- * @deprecated
- * @param triplesIns
- * @param triplesDel
- * @param rules
- * @returns {{fi: *, fe: *}}
- */
-export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
-  let FiAdd = [];
-  let Fe = Logics.getOnlyExplicitFacts(F);
-  let FiAddNew;
-
-  // Deletion
-  if (FeDel?.length) {
-    Fe = Logics.minus(Fe, FeDel);
-  }
-
-  // Insertion
-  if (FeAdd?.length) {
-    Fe = Utils.uniques(Fe, FeAdd);
-  }
-
-  // Recalculation
-  do {
-    FiAdd = Utils.uniques(FiAdd, FiAddNew);
-    // eslint-disable-next-line no-await-in-loop
-    FiAddNew = await Solver.evaluateRuleSet(R, Utils.uniques(Fe, FiAdd));
-  } while (!Logics.containsFacts(FiAdd, FiAddNew));
-
-  const additions: Fact[] = Utils.uniques(FeAdd, FiAdd);
-  const deletions: Fact[] = Logics.minus(F, Utils.uniques(Fe, FiAdd));
-
-  F = Utils.uniques(Fe, FiAdd);
-
-  return {
-    additions,
-    deletions,
-    updatedF: F,
-  };
-}
-
-/**
  * Incremental reasoning which avoids complete recalculation of facts.
  * Concat is preferred over merge for evaluation purposes.
  * @param FeAdd set of assertions to be added
@@ -78,15 +36,15 @@ export async function incremental(
     let Rdel = [];
     let Rred = [];
     let Rins = [];
-    let FiDel = [];
-    let FiAdd = [];
-    let FiDelNew = [];
-    let FiAddNew = [];
+    let FiDel: Fact[] = [];
+    let FiAdd: Fact[] = [];
+    let FiDelNew: Fact[] = [];
+    let FiAddNew: Fact[] = [];
     let superSet = [];
     let additions;
     let deletions;
-    let Fe = FactExplicit;
-    let Fi = FactImplicit;
+    let Fe: Fact[] = FactExplicit;
+    let Fi: Fact[] = FactImplicit;
 
     function startAlgorithm() {
       overDeletionEvaluationLoop();
@@ -148,10 +106,9 @@ export async function incremental(
 /**
  * Returns valid facts using explicit facts' validity tags.
  * @param F
- * @param refs
  * @returns {Array}
  */
-export function tagFilter(F) {
+export function tagFilter(F: Fact[]) {
   return F.filter((f) => f.isValid());
 }
 
@@ -185,21 +142,20 @@ export function tagging(FeAdd, FeDel, F, R) {
       }
     }
 
-    function evaluationLoop() {
+    async function evaluationLoop() {
       F = Utils.uniques(F, Fi);
       Rins = Logics.restrictRuleSet(R, F);
-      Solver.evaluateRuleSet(Rins, F, true)
-        .then((values) => {
-          FiAdd = values.cons;
-          if (Logics.unify(FiAdd, Fi)) {
-            setTimeout(evaluationLoop, 1);
-          } else {
-            resolve({
-              additions: newExplicitFacts.concat(resolvedExplicitFacts, Fi),
-              deletions: [],
-            });
-          }
-        });
+      Solver.evaluateRuleSet(Rins, F, true).then((values) => {
+        FiAdd = values.cons;
+        if (Logics.unify(FiAdd, Fi)) {
+          setTimeout(evaluationLoop, 1);
+        } else {
+          resolve({
+            additions: newExplicitFacts.concat(resolvedExplicitFacts, Fi),
+            deletions: [],
+          });
+        }
+      });
     }
 
     // Returns new explicit facts to be added

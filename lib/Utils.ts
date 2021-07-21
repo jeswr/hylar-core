@@ -13,7 +13,7 @@ import * as Logics from './Logics/Logics';
  * @param _set2
  * @returns {Array}
  */
-export function uniques(_set1, _set2) {
+export function uniques<T>(_set1: T[], _set2: T[]): T[] {
   const hash = {}; const uniq = []; const fullSet = _set1.concat(_set2);
 
   for (let i = 0; i < fullSet.length; i++) {
