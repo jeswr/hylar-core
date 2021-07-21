@@ -76,10 +76,6 @@ export default class Rule {
     return `${factConj.substr(3)} -> ${this.consequences.toString().substring(1).replace(/,/g, '')}`;
   }
 
-  setName(name) {
-    this.name = name;
-  }
-
   /**
    * Orders rule causes (inplace) from the most to the least restrictive.
    * The least a cause have variables, the most it is restrictive.
@@ -115,43 +111,5 @@ export default class Rule {
     }
 
     this.causes = orderedCauses;
-  }
-
-  dependsOn({ consequences }) {
-    for (let i = 0; i < consequences.length; i++) {
-      const cons = consequences[i];
-      for (let j = 0; j < this.causes.length; j++) {
-        const cause = this.causes[j];
-        if (cause.hasSimilarPatternWith(cons)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  addDependentRule(rule) {
-    if (!(rule in this.dependentRules)) {
-      this.dependentRules.push(rule);
-    }
-  }
-
-  toCHR() {
-    let factConj = '';
-    const mapping = {};
-    for (const key in this.causes) {
-      factConj += `, ${this.causes[key].toCHR(mapping)}`;
-    }
-    for (const key in this.operatorCauses) {
-      factConj += `, ${this.operatorCauses[key].toCHR(mapping)}`;
-    }
-    factConj = `${factConj.substring(2)} ==> `;
-
-    for (const key in this.consequences) {
-      factConj += `${this.consequences[key].toCHR(mapping)}, `;
-    }
-    factConj = factConj.substring(0, factConj.length - 2);
-
-    return factConj;
   }
 }

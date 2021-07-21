@@ -28,7 +28,7 @@ export default class Fact {
 
     fromTriple: any;
 
-    causedBy: any[];
+    causedBy: Fact[][];
 
     explicit: boolean;
 
@@ -42,7 +42,7 @@ export default class Fact {
 
     asString: any;
 
-    __propagate__: any;
+    private propagate: any;
 
     // TODO: See if needed
     rule: any;
@@ -110,22 +110,6 @@ export default class Fact {
       return this.asString;
     }
 
-    toCHR(mapping) {
-      let chrized;
-
-      if (mapping === undefined) {
-        mapping = {};
-      }
-
-      if (this.falseFact) {
-        chrized = 'FALSE()';
-      } else {
-        chrized = `t(${this.subjectCHR(mapping)}, ${this.predicateCHR(mapping)}, ${this.objectCHR(mapping)})`;
-      }
-
-      return chrized;
-    }
-
     toRaw() {
       let spo;
 
@@ -136,30 +120,6 @@ export default class Fact {
       }
 
       return spo;
-    }
-
-    subjectCHR(mapping) {
-      return Utils.asCHRAtom(this.subject, mapping);
-    }
-
-    predicateCHR(mapping) {
-      return Utils.asCHRAtom(this.predicate, mapping);
-    }
-
-    objectCHR(mapping) {
-      return Utils.asCHRAtom(this.object, mapping);
-    }
-
-    truncatedString() {
-      let spo;
-
-      if (this.falseFact) {
-        spo = 'FALSE';
-      } else {
-        spo = `(${Utils.removeBeforeSharp(this.subject)}, ${Utils.removeBeforeSharp(this.predicate)}, ${Utils.removeBeforeSharp(this.object)})`;
-      }
-
-      return (this.explicit ? 'E' : 'I') + spo;
     }
 
     /**
@@ -210,44 +170,16 @@ export default class Fact {
       if (this.explicit) {
         return this.valid;
       } if (this.causedBy === undefined || this.causedBy.length === 0) {
-        return undefined;
+        return false;
       }
-      let valid;
-      const causes = this.causedBy;
-      let explicitFact;
-      for (let i = 0; i < causes.length; i++) {
-        valid = true;
-        for (let j = 0; j < causes[i].length; j++) {
-          explicitFact = causes[i][j];
-          valid = valid && explicitFact.valid;
-        }
-        return valid;
-      }
-      return false;
-    }
-
-    derives(kb) {
-      const factsDerived = [];
-      for (let i = 0; i < kb.length; i++) {
-        if (this.appearsIn(kb[i].implicitCauses)) {
-          factsDerived.push(kb[i]);
-        } else {
-          for (let j = 0; j < kb[i].causedBy.length; j++) {
-            if (this.appearsIn(kb[i].causedBy[j])) {
-              factsDerived.push(kb[i]);
-              break;
-            }
-          }
-        }
-      }
-      return factsDerived;
+      return this.causedBy.some((cause) => cause.every((explicitFact) => explicitFact.valid));
     }
 
     doPropagate(keptFact) {
-      if (this.__propagate__) {
-        for (let i = 0; i < this.__propagate__.consequences.length; i++) {
-          if (this.__propagate__.consequences[i] === this) {
-            this.__propagate__.consequences[i] = keptFact;
+      if (this.propagate) {
+        for (let i = 0; i < this.propagate.consequences.length; i++) {
+          if (this.propagate.consequences[i] === this) {
+            this.propagate.consequences[i] = keptFact;
           }
         }
       }

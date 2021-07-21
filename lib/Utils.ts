@@ -69,21 +69,6 @@ export function removeBeforeSharp(str) {
   return /* splitted[0].slice(0,10) + '...#' + */splitted[1];
 }
 
-export function equivalentSets(s1, s2) {
-  if (s1.toString() === s2.toString()) {
-    return true;
-  }
-  if (s1.length !== s2.length) {
-    return false;
-  }
-  for (let i = 0; i < s1.length; i++) {
-    if (this.notInSet(s2, s1[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 export function notInSet(s1, elem) {
   return (s1.toString().indexOf(elem.toString()) === -1);
 }
@@ -95,32 +80,4 @@ export function getValueFromDatatype(datatype) {
     return literalWithoutTypeMatch;
   }
   return rawValueMatch;
-}
-
-export function emptyPromise(toBeReturned) {
-  return new Promise((resolve) => { resolve(toBeReturned); });
-}
-
-export function tripleContainsVariable(triple) {
-  if (this.isVariable(triple.subject)
-    || this.isVariable(triple.predicate)
-    || this.isVariable(triple.object)) {
-    return true;
-  }
-  return false;
-}
-
-export function asCHRAtom(elem, mapping) {
-  if (Logics.isVariable(elem)) {
-    if (mapping[elem] === undefined) {
-      if (mapping.__lastCHRVar) {
-        mapping.__lastCHRVar = String.fromCharCode(mapping.__lastCHRVar.charCodeAt(0) + 1);
-      } else {
-        mapping.__lastCHRVar = 'A';
-      }
-      mapping[elem] = mapping.__lastCHRVar;
-    }
-    return mapping[elem];
-  }
-  return `"${elem.replace(/[^a-zA-Z]/g, '')}"`;
 }

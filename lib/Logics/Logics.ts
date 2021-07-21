@@ -9,7 +9,6 @@ import Rule from './Rule';
 
 import Fact from './Fact';
 import * as Utils from '../Utils';
-import * as Errors from '../Errors';
 import RegularExpressions from '../RegularExpressions';
 import Prefixes from '../Prefixes';
 
@@ -281,7 +280,7 @@ export function disjunctCauses(prev, next) {
   const disjunction = [];
 
   if ((prev === []) || (next === [])) {
-    throw Errors.OrphanImplicitFact();
+    throw new Error('Implicit facts could not have empty causes.');
   }
 
   for (let i = 0; i < prev.length; i++) {
