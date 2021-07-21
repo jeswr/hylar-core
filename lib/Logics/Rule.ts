@@ -3,6 +3,7 @@
  */
 
 import * as Utils from '../Utils';
+import Fact from './Fact';
 
 /**
  * Rule in the form subClassOf(a, b) ^ subClassOf(b, c) -> subClassOf(a, c)
@@ -14,7 +15,7 @@ import * as Utils from '../Utils';
 export default class Rule {
   name: any;
 
-  causes: any[];
+  causes: Fact[];
 
   operatorCauses: any[];
 
@@ -84,7 +85,7 @@ export default class Rule {
     const orderedCauses = [];
     let totalConstantOccurences = [];
 
-    for (const cause of this.causes) {
+    for (const { quad } of this.causes) {
       let constantOccurences = 0;
       if (!cause.subject.startsWith('?')) {
         constantOccurences++;

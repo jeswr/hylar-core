@@ -33,35 +33,6 @@ export function containsSubset(_set1, _set2) {
   return this.uniques(_set1, _set2).length === _set1.length;
 }
 
-/**
- * Checks if a string is a variable,
- * @param str
- * @returns {boolean}
- */
-export function isVariable(str) {
-  if (str === undefined) {
-    return false;
-  }
-  try {
-    return (str.indexOf('?') === 0);
-  } catch (e) {
-    return false;
-  }
-}
-
-/**
- * Checks if a string is an operator (>, <, >=, <= or =)
- * @param str
- * @returns {boolean}
- */
-export function isOperator(str) {
-  try {
-    return ((str === '>') || (str === '<') || (str === '<=') || (str === '>=') || (str === '=='));
-  } catch (e) {
-    return false;
-  }
-}
-
 export function getValueFromDatatype(datatype) {
   const rawValueMatch = datatype.match(RegularExpressions.LITERAL_RAW_VALUE)[1];
   const literalWithoutTypeMatch = datatype.match(RegularExpressions.LITERAL_WITHOUT_TYPE)[1];

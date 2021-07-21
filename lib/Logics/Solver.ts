@@ -196,10 +196,8 @@ export function factMatches(fact, { predicate, object, subject }, mapping) {
       localMapping[mapKey] = Utils.uniques(mapping[mapKey], [fact]);
     } else {
       for (const key in localMapping) {
-        if (mapping[mapKey] === localMapping[key]) {
-          if (mapKey !== key) {
-            return false;
-          }
+        if (mapping[mapKey] === localMapping[key] && mapKey !== key) {
+          return false;
         }
       }
       localMapping[mapKey] = mapping[mapKey];
@@ -264,9 +262,11 @@ export function substituteFactVariables(mapping, notYetSubstitutedFact, causedBy
     substitutedFact.explicit = false;
   }
 
-  if (rule) {
-    substitutedFact.rule = rule;
-  }
-
   return substitutedFact;
+
+  // if (rule) {
+  //   substitutedFact.rule = rule;
+  // }
+
+  // return substitutedFact;
 }

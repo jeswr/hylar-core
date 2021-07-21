@@ -110,10 +110,10 @@ export function causeMemberMatchesFactMember(causeMember, factMember) {
  * identical URIs.
  * @returns {boolean}
  */
-export function similarAtoms(atom1, atom2) {
-  return (isVariable(atom1) && isVariable(atom2))
-    || atom1 === atom2;
-}
+// export function similarAtoms(atom1, atom2) {
+//   return (isVariable(atom1) && isVariable(atom2))
+//     || atom1 === atom2;
+// }
 
 /**
  * Substracts each set.
@@ -245,7 +245,7 @@ export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {
 export function _createFactSetFromTriples(triples) {
   const set: Fact[] = [];
   if (triples[0] === 'false') {
-    set.push(new Fact('FALSE'));
+    set.push(new Fact(false));
   } else {
     for (const triple of triples) {
       const atoms = triple.match(RegularExpressions.ATOM).splice(1).map(
