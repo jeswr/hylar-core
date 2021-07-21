@@ -3,8 +3,7 @@
  * Created by Spadon on 13/02/2015.
  */
 
-import RegularExpressions from './RegularExpressions';
-import * as Logics from './Logics/Logics';
+import * as RegularExpressions from './RegularExpressions';
 
 /**
  * Returns a set of elements
@@ -61,16 +60,6 @@ export function isOperator(str) {
   } catch (e) {
     return false;
   }
-}
-
-export function removeBeforeSharp(str) {
-  if (str.indexOf('#') === -1 || str.charAt(0) === '"') return str;
-  const splitted = str.split('#');
-  return /* splitted[0].slice(0,10) + '...#' + */splitted[1];
-}
-
-export function notInSet(s1, elem) {
-  return (s1.toString().indexOf(elem.toString()) === -1);
 }
 
 export function getValueFromDatatype(datatype) {

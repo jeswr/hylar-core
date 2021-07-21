@@ -24,6 +24,7 @@ import * as Utils from './Utils';
  * @param FactImplicit set of assertions (implicit)
  * @param R set of rules
  */
+// eslint-disable-next-line import/prefer-default-export
 export async function incremental(
   FeAdd: Fact[],
   FeDel?: Fact[],
@@ -45,10 +46,6 @@ export async function incremental(
     let deletions;
     let Fe: Fact[] = FactExplicit;
     let Fi: Fact[] = FactImplicit;
-
-    function startAlgorithm() {
-      overDeletionEvaluationLoop();
-    }
 
     function overDeletionEvaluationLoop() {
       FiDel = Utils.uniques(FiDel, FiDelNew);
@@ -99,70 +96,6 @@ export async function incremental(
           }
         });
     }
-    startAlgorithm();
-  });
-}
-
-/**
- * Returns valid facts using explicit facts' validity tags.
- * @param F
- * @returns {Array}
- */
-export function tagFilter(F: Fact[]) {
-  return F.filter((f) => f.isValid());
-}
-
-/**
- * Tags newly inferred facts, and (un)validates updated ones.
- * Explicit facts are 'validity'-tagged, while
- * implicit ones are 'causedBy'-tagged.
- * @param FeAdd
- * @param FeDel
- * @param F
- * @param R
- * @returns {{additions: *, deletions: Array}}
- */
-export function tagging(FeAdd, FeDel, F, R) {
-  let newExplicitFacts;
-  let resolvedExplicitFacts;
-  let validUpdateResults;
-  let FiAdd = [];
-  let Rins = [];
-  const Fi = Logics.getOnlyImplicitFacts(F);
-
-  return new Promise((resolve) => {
-    function startAlgorithm() {
-      if (newExplicitFacts.length > 0) {
-        evaluationLoop();
-      } else {
-        resolve({
-          additions: resolvedExplicitFacts,
-          deletions: [],
-        });
-      }
-    }
-
-    async function evaluationLoop() {
-      F = Utils.uniques(F, Fi);
-      Rins = Logics.restrictRuleSet(R, F);
-      Solver.evaluateRuleSet(Rins, F, true).then((values) => {
-        FiAdd = values.cons;
-        if (Logics.unify(FiAdd, Fi)) {
-          setTimeout(evaluationLoop, 1);
-        } else {
-          resolve({
-            additions: newExplicitFacts.concat(resolvedExplicitFacts, Fi),
-            deletions: [],
-          });
-        }
-      });
-    }
-
-    // Returns new explicit facts to be added
-    validUpdateResults = Logics.updateValidTags(F, FeAdd, FeDel);
-    newExplicitFacts = validUpdateResults.new;
-    resolvedExplicitFacts = validUpdateResults.resolved;
-    F = F.concat(newExplicitFacts);
-    startAlgorithm();
+    overDeletionEvaluationLoop();
   });
 }

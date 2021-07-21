@@ -9,35 +9,13 @@ import Rule from './Rule';
 
 import Fact from './Fact';
 import * as Utils from '../Utils';
-import RegularExpressions from '../RegularExpressions';
-import Prefixes from '../Prefixes';
+import * as RegularExpressions from '../RegularExpressions';
+import * as Prefixes from '../Prefixes';
 
 /**
  * All necessary stuff around the Logics module
  * @type {{substractFactSets: Function, mergeFactSets: Function}}
  */
-
-/**
- * True-like merge of two facts sets, which also merges
- * identical facts causedBy properties.
- * @param fs1
- * @param fs2
- */
-export function combine(fs, subset) {
-  for (const fact of fs) {
-    for (let j = 0; j < subset.length; j++) {
-      if ((subset[j] !== undefined) && (fact.equivalentTo(subset[j]))) {
-        fact.causedBy = uniquesCausedBy(fact.causedBy, subset[j].causedBy);
-        fact.consequences = fact.consequences.concat(subset[j].consequences);
-        subset[j].doPropagate(fact);
-        delete subset[j];
-      }
-    }
-  }
-  for (const fact of subset) {
-    if (fact !== undefined) fs.push(fact);
-  }
-}
 
 /**
  * Returns implicit facts from the set.
@@ -138,22 +116,6 @@ export function similarAtoms(atom1, atom2) {
 }
 
 /**
- * Checks if a set of facts is a subset of another set of facts.
- * @param fs1 the superset
- * @param fs2 the potential subset
- */
-export function containsFacts(fs1, fs2) {
-  if (!fs2 || (fs2.length > fs1.length)) return false;
-  for (const key in fs2) {
-    const fact = fs2[key];
-    if (!(fact.appearsIn(fs1))) {
-      return false;
-    }
-  }
-  return true;
-}
-
-/**
  * Substracts each set.
  * Not to be used in tag-based reasoning.
  * @param _set1
@@ -190,38 +152,6 @@ export function isVariable(str) {
   } catch (e) {
     return false;
   }
-}
-
-export function updateValidTags(kb, additions, deletions) {
-  const newAdditions = [];
-  const resolvedAdditions = [];
-  const kbMap = kb.map((x) => x.toRaw());
-  let index;
-  for (const addition of additions) {
-    index = kbMap.includes(addition.toRaw());
-    if (index !== -1) {
-      if (kb[index].explicit) {
-        kb[index].valid = true;
-      } else {
-        addAlternativeDerivationAsCausedByFromExplicit(kb, kb[index], addition);
-        resolvedAdditions.push(addition);
-      }
-    } else {
-      newAdditions.push(addition);
-    }
-  }
-
-  for (const deletion of deletions) {
-    index = kbMap.indexOf(deletion.toRaw());
-    if (index !== -1 && kb[index].explicit) {
-      kb[index].valid = false;
-    }
-  }
-
-  return {
-    new: newAdditions,
-    resolved: resolvedAdditions,
-  };
 }
 
 export function addAlternativeDerivationAsCausedByFromExplicit(kb, { consequences }, altFact) {
@@ -290,67 +220,6 @@ export function disjunctCauses(prev, next) {
     }
   }
   return disjunction;
-}
-
-export function unifyFactSet(fs) {
-  const unifiedSet = [];
-  let foundFactIndex;
-  for (let i = 0; i < fs.length; i++) {
-    if (fs[i] !== undefined) {
-      // eslint-disable-next-line no-cond-assign
-      if (foundFactIndex = fs[i].appearsIn(unifiedSet)) {
-        unifiedSet[foundFactIndex].causedBy = this.uniquesCausedBy(
-          fs[i].causedBy, unifiedSet[foundFactIndex].causedBy,
-        );
-        unifiedSet[foundFactIndex].consequences = Utils.uniques(
-          fs[i].consequences, unifiedSet[foundFactIndex].consequences,
-        );
-        fs[i].doPropagate(unifiedSet[foundFactIndex]);
-      } else {
-        unifiedSet.push(fs[i]);
-      }
-    }
-  }
-  return unifiedSet;
-}
-
-export function unify(subSet, updatingSet) {
-  const initialLength = updatingSet.length;
-
-  subSet = unifyFactSet(subSet);
-  combine(updatingSet, subSet);
-  return initialLength < updatingSet.length;
-}
-
-export function uniquesCausedBy(cb1, cb2) {
-  let min; let max; const newCb = []; let found;
-
-  if (cb1.length >= cb2.length) {
-    min = cb2;
-    max = cb1;
-  } else {
-    min = cb1;
-    max = cb2;
-  }
-
-  for (let i = 0; i < max.length; i++) {
-    found = false;
-    for (let j = 0; j < min.length; j++) {
-      if (this.containsFacts(min[j], max[i])) {
-        found = true;
-        if (min.length !== max.length) {
-          min[j] = max[i];
-        }
-        break;
-      }
-    }
-
-    if (!found) {
-      newCb.push(max[i]);
-    }
-  }
-
-  return newCb.concat(min.slice());
 }
 
 export function parseRules(strRuleList: string[], entailment = Rule.types.CUSTOM): Rule[] {
