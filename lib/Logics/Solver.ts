@@ -5,6 +5,7 @@
 import Fact from './Fact';
 import * as Logics from './Logics';
 import * as Utils from '../Utils';
+import Rule from './Rule';
 
 /**
 * Core solver used to evaluate rules against facts
@@ -17,7 +18,7 @@ import * as Utils from '../Utils';
 * @param facts
 * @returns Array of the evaluation.
 */
-export async function evaluateRuleSet(rs, facts, doTagging = false) {
+export async function evaluateRuleSet(rs, facts: Fact[], doTagging = false) {
   const promises = [];
   for (const key in rs) {
     if (doTagging) {
@@ -36,7 +37,7 @@ export async function evaluateRuleSet(rs, facts, doTagging = false) {
 * @param facts
 * @returns {Array}
 */
-export async function evaluateThroughRestriction(rule, facts) {
+export async function evaluateThroughRestriction(rule: Rule, facts: Fact[]) {
   const mappingList = getMappings(rule, facts); const consequences = [];
 
   checkOperators(rule, mappingList);
@@ -113,15 +114,12 @@ export function checkOperators(rule, mappingList) {
 }
 
 export function getMappings(rule, facts) {
-  let i = 0; let mappingList;
+  let mappingList = [rule.causes[0]]; // Init with first cause
 
-  mappingList = [rule.causes[i]]; // Init with first cause
-
-  while (i < rule.causes.length) {
+  for (let i = 0; i < rule.causes.length; i++) {
     mappingList = substituteNextCauses(
       mappingList, rule.causes[i + 1], facts, rule.constants, rule,
     );
-    i++;
   }
   return mappingList;
 }
@@ -166,11 +164,7 @@ export function substituteNextCauses(currentCauses, nextCause, facts, constants,
       }
     }
   }
-
-  if (nextCause) {
-    return substitutedNextCauses;
-  }
-  return mappings;
+  return nextCause ? substitutedNextCauses : mappings;
 }
 
 /**

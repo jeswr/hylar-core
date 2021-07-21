@@ -206,17 +206,14 @@ export function combineImplicitCauses(implicitFacts) {
 }
 
 export function disjunctCauses(prev, next) {
-  let conjunction;
-  const disjunction = [];
-
   if ((prev === []) || (next === [])) {
     throw new Error('Implicit facts could not have empty causes.');
   }
 
-  for (let i = 0; i < prev.length; i++) {
-    conjunction = prev[i];
-    for (let j = 0; j < next.length; j++) {
-      disjunction.push(Utils.uniques(conjunction, next[j]));
+  const disjunction = [];
+  for (const conjunction of prev) {
+    for (const n of next) {
+      disjunction.push(Utils.uniques(conjunction, n));
     }
   }
   return disjunction;
@@ -239,10 +236,10 @@ export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {
   const bodyTriples = strRule.split('->')[1].match(RegularExpressions.TRIPLE);
   const headTriples = strRule.split('->')[0].match(RegularExpressions.TRIPLE);
 
-  const causes = _createFactSetFromTriples(headTriples);
-  const consequences = _createFactSetFromTriples(bodyTriples);
-
-  return new Rule(causes, consequences, name, entailment);
+  return new Rule(
+    _createFactSetFromTriples(headTriples),
+    _createFactSetFromTriples(bodyTriples), name, entailment,
+  );
 }
 
 export function _createFactSetFromTriples(triples) {
@@ -250,17 +247,13 @@ export function _createFactSetFromTriples(triples) {
   if (triples[0] === 'false') {
     set.push(new Fact('FALSE'));
   } else {
-    for (let i = 0; i < triples.length; i++) {
-      const atoms = [];
-
-      for (let atom of triples[i].match(RegularExpressions.ATOM).splice(1)) {
-        if (atom.match(RegularExpressions.PREFIXED_URI)) {
-          atom = Prefixes.replacePrefixWithUri(
+    for (const triple of triples) {
+      const atoms = triple.match(RegularExpressions.ATOM).splice(1).map(
+        (atom) => (atom.match(RegularExpressions.PREFIXED_URI)
+          ? Prefixes.replacePrefixWithUri(
             atom, atom.match(RegularExpressions.PREFIXED_URI)[1],
-          );
-        }
-        atoms.push(atom);
-      }
+          ) : atom),
+      );
 
       set.push(new Fact(atoms[1], atoms[0], atoms[2]));
     }
