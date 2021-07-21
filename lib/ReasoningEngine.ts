@@ -34,67 +34,57 @@ export async function incremental(
 ):
   Promise<{ additions: Fact[], deletions: Fact[] }> {
   return new Promise((resolve) => {
-    let Rdel = [];
-    let Rred = [];
-    let Rins = [];
     let FiDel: Fact[] = [];
     let FiAdd: Fact[] = [];
     let FiDelNew: Fact[] = [];
     let FiAddNew: Fact[] = [];
-    let superSet = [];
-    let additions;
-    let deletions;
     let Fe: Fact[] = FactExplicit;
     let Fi: Fact[] = FactImplicit;
 
-    function overDeletionEvaluationLoop() {
+    async function overDeletionEvaluationLoop() {
       FiDel = Utils.uniques(FiDel, FiDelNew);
-      Rdel = Logics.restrictRuleSet(R, Utils.uniques(FeDel, FiDel));
-      Solver.evaluateRuleSet(Rdel, Utils.uniques(Utils.uniques(Fi, Fe), FeDel))
-        .then((values) => {
-          FiDelNew = values.cons;
-          if (Utils.uniques(FiDel, FiDelNew).length > FiDel.length) {
-            overDeletionEvaluationLoop();
-          } else {
-            Fe = Logics.minus(Fe, FeDel);
-            Fi = Logics.minus(Fi, FiDel);
-            rederivationEvaluationLoop();
-          }
-        });
+
+      const values = await Solver.evaluateRuleSet(
+        Logics.restrictRuleSet(R, Utils.uniques(FeDel, FiDel)),
+        Utils.uniques(Utils.uniques(Fi, Fe), FeDel),
+      );
+
+      FiDelNew = values.cons;
+      if (Utils.uniques(FiDel, FiDelNew).length > FiDel.length) {
+        await overDeletionEvaluationLoop();
+      } else {
+        Fe = Logics.minus(Fe, FeDel);
+        Fi = Logics.minus(Fi, FiDel);
+        rederivationEvaluationLoop();
+      }
     }
 
-    function rederivationEvaluationLoop() {
+    async function rederivationEvaluationLoop() {
       FiAdd = Utils.uniques(FiAdd, FiAddNew);
-      Rred = Logics.restrictRuleSet(R, FiDel);
-      Solver.evaluateRuleSet(Rred, Utils.uniques(Fe, Fi))
-        .then((values) => {
-          FiAddNew = values.cons;
-          if (Utils.uniques(FiAdd, FiAddNew).length > FiAdd.length) {
-            rederivationEvaluationLoop();
-          } else {
-            insertionEvaluationLoop();
-          }
-        });
+      const values = await Solver.evaluateRuleSet(
+        Logics.restrictRuleSet(R, FiDel), Utils.uniques(Fe, Fi),
+      );
+      FiAddNew = values.cons;
+      if (Utils.uniques(FiAdd, FiAddNew).length > FiAdd.length) {
+        await rederivationEvaluationLoop();
+      } else {
+        insertionEvaluationLoop();
+      }
     }
 
-    function insertionEvaluationLoop() {
+    async function insertionEvaluationLoop() {
       FiAdd = Utils.uniques(FiAdd, FiAddNew);
-      superSet = Utils.uniques(Utils.uniques(Utils.uniques(Fe, Fi), FeAdd), FiAdd);
-      Rins = Logics.restrictRuleSet(R, superSet);
-      Solver.evaluateRuleSet(Rins, superSet)
-        .then((values) => {
-          FiAddNew = values.cons;
-          if (!Utils.containsSubset(FiAdd, FiAddNew)) {
-            insertionEvaluationLoop();
-          } else {
-            additions = Utils.uniques(FeAdd, FiAdd);
-            deletions = Utils.uniques(FeDel, FiDel);
-            resolve({
-              additions,
-              deletions,
-            });
-          }
+      const superSet = Utils.uniques(Utils.uniques(Utils.uniques(Fe, Fi), FeAdd), FiAdd);
+      const values = await Solver.evaluateRuleSet(Logics.restrictRuleSet(R, superSet), superSet);
+      FiAddNew = values.cons;
+      if (!Utils.containsSubset(FiAdd, FiAddNew)) {
+        await insertionEvaluationLoop();
+      } else {
+        resolve({
+          additions: Utils.uniques(FeAdd, FiAdd),
+          deletions: Utils.uniques(FeDel, FiDel),
         });
+      }
     }
     overDeletionEvaluationLoop();
   });
