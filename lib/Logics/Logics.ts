@@ -18,38 +18,6 @@ import * as Prefixes from '../Prefixes';
  */
 
 /**
- * Returns implicit facts from the set.
- * @param fs
- * @returns {Array}
- */
-export function getOnlyImplicitFacts(fs) {
-  const fR = [];
-  for (const key in fs) {
-    const fact = fs[key];
-    if (!fact.explicit) {
-      fR.push(fact);
-    }
-  }
-  return fR;
-}
-
-/**
- * Returns explicit facts from the set.
- * @param fs
- * @returns {Array}
- */
-export function getOnlyExplicitFacts(fs: { [key: string]: Fact }): Fact[] {
-  const fR: Fact[] = [];
-  for (const key in fs) {
-    const fact = fs[key];
-    if (fact.explicit) {
-      fR.push(fact);
-    }
-  }
-  return fR;
-}
-
-/**
  * Returns a restricted rule set,
  * in which at least one fact from the fact set
  * matches all rules.
@@ -57,28 +25,10 @@ export function getOnlyExplicitFacts(fs: { [key: string]: Fact }): Fact[] {
  * @param fs
  * @returns {Array}
  */
-export function restrictRuleSet(rs, fs) {
-  const restriction = [];
-
-  for (const rule of rs) {
-    let matches = false;
-
-    for (const cause of rule.causes) {
-      for (const fact of fs) {
-        if (causeMatchesFact(cause, fact)) {
-          matches = true;
-          break;
-        }
-      }
-
-      if (matches) {
-        restriction.push(rule);
-        break;
-      }
-    }
-  }
-
-  return restriction;
+export function restrictRuleSet(rs: Rule[], fs: Fact[]) {
+  return rs.filter(({ causes }) => causes.some((cause) => fs.some(
+    (fact) => causeMatchesFact(cause, fact),
+  )));
 }
 
 /**
@@ -106,39 +56,16 @@ export function causeMemberMatchesFactMember(causeMember, factMember) {
 }
 
 /**
- * Return true if the two atoms are either both variables, or
- * identical URIs.
- * @returns {boolean}
- */
-// export function similarAtoms(atom1, atom2) {
-//   return (isVariable(atom1) && isVariable(atom2))
-//     || atom1 === atom2;
-// }
-
-/**
  * Substracts each set.
  * Not to be used in tag-based reasoning.
  * @param _set1
  * @param _set2
  * @returns {Array}
  */
-export function minus(_set1, _set2) {
-  let flagEquals;
-  const newSet = [];
-  for (let i = 0; i < _set1.length; i++) {
-    flagEquals = false;
-    for (let j = 0; j < _set2.length; j++) {
-      if (_set1[i].asString === _set2[j].asString) {
-        flagEquals = true;
-        break;
-      }
-    }
-    if (!flagEquals) {
-      newSet.push(_set1[i]);
-    }
-  }
-
-  return newSet;
+export function minus(set1: any[], set2: any[]) {
+  const hash: Record<string, boolean> = {};
+  set2.forEach((fact) => { hash[`${fact}`] = true; });
+  return set1.filter((fact) => !(`${fact}` in hash));
 }
 
 /**
@@ -165,9 +92,9 @@ export function addAlternativeDerivationAsCausedByFromExplicit(kb, { consequence
   }
 }
 
-export function buildCauses(conjunction) {
-  const explicitFacts = getOnlyExplicitFacts(conjunction);
-  const implicitFacts = getOnlyImplicitFacts(conjunction);
+export function buildCauses(conjunction: Fact[]) {
+  const explicitFacts = conjunction.filter((fact) => fact.explicit);
+  const implicitFacts = conjunction.filter((fact) => !fact.explicit);
   let combinedImplicitCauses;
   const builtCauses = [];
 
@@ -187,11 +114,11 @@ export function buildCauses(conjunction) {
 }
 
 export function addConsequences(facts, consequences) {
-  for (let i = 0; i < facts.length; i++) {
-    if (!facts[i].explicit) {
-      facts[i].consequences = facts[i].consequences.concat(consequences);
-      for (let j = 0; j < consequences.length; j++) {
-        consequences[j].__propagate__ = facts[i];
+  for (const fact of facts) {
+    if (!fact.explicit) {
+      fact.consequences = fact.consequences.concat(consequences);
+      for (const consequence of consequences) {
+        consequence.__propagate__ = fact;
       }
     }
   }
@@ -199,8 +126,8 @@ export function addConsequences(facts, consequences) {
 
 export function combineImplicitCauses(implicitFacts) {
   let combination = implicitFacts[0].causedBy;
-  for (let i = 1; i < implicitFacts.length; i++) {
-    combination = this.disjunctCauses(combination, implicitFacts[i].causedBy);
+  for (const { causedBy } of implicitFacts) {
+    combination = this.disjunctCauses(combination, causedBy);
   }
   return combination;
 }
@@ -220,16 +147,10 @@ export function disjunctCauses(prev, next) {
 }
 
 export function parseRules(strRuleList: string[], entailment = Rule.types.CUSTOM): Rule[] {
-  const parsedRuleList: Rule[] = [];
-  for (let i = 0; i < strRuleList.length; i++) {
-    const match = strRuleList[i].match('(.+)=(.+)');
-    if (match) {
-      parsedRuleList.push(parseRule(match[2], match[1], entailment));
-    } else {
-      parsedRuleList.push(parseRule(strRuleList[i], null, entailment));
-    }
-  }
-  return parsedRuleList;
+  return strRuleList.map((rule) => {
+    const match = rule.match('(.+)=(.+)');
+    return match ? parseRule(match[2], match[1], entailment) : parseRule(rule, null, entailment);
+  });
 }
 
 export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {

@@ -6,8 +6,6 @@
 import type { Quad } from 'rdf-js';
 import { termToString } from 'rdf-string';
 
-// import * as Logics from './Logics';
-
 /**
  * Fact in the form subClassOf(a, b)
  * @param pred fact's/axiom name (e.g. subClassOf)
@@ -25,7 +23,7 @@ export default class Fact {
     public explicit = true,
     public consequences: Fact[] = [],
   ) {
-    this.asString = (this.explicit ? 'E' : 'I') + this.quad ? termToString(this.quad as Quad) : 'FALSE';
+    this.asString = `${this.explicit ? 'E' : 'I'}${this.quad ? termToString(this.quad as Quad) : 'FALSE'}`;
   }
 
   toString() {
