@@ -1,21 +1,13 @@
-/* eslint-disable no-use-before-define */
-/**
- * Created by MT on 11/09/2015.
- * Logics module
- */
-
 import md5 from 'md5';
+import type { Term } from 'rdf-js';
 import Rule from './Rule';
 
 import Fact from './Fact';
 import * as Utils from '../Utils';
 import * as RegularExpressions from '../RegularExpressions';
 import * as Prefixes from '../Prefixes';
-
-/**
- * All necessary stuff around the Logics module
- * @type {{substractFactSets: Function, mergeFactSets: Function}}
- */
+import { stringQuadToQuad } from 'rdf-string';
+import { stringToTerm } from 'rdf-string-ttl';
 
 /**
  * Returns a restricted rule set,
@@ -25,10 +17,13 @@ import * as Prefixes from '../Prefixes';
  * @param fs
  * @returns {Array}
  */
-export function restrictRuleSet(rs: Rule[], fs: Fact[]) {
-  return rs.filter(({ causes }) => causes.some((cause) => fs.some(
-    (fact) => causeMatchesFact(cause, fact),
-  )));
+export function restrictRuleSet(rs: Rule[], fs: IterableIterator<Fact> | Fact[]) {
+  return rs.filter(({ causes }) => causes.some((cause) => {
+    for (const fact of fs) { 
+      if (causeMatchesFact(cause, fact)) return true;
+    }
+    return false
+  }));
 }
 
 /**
@@ -51,8 +46,8 @@ export function causeMatchesFact(fact1, fact2) {
  * @param factMember
  * @returns {boolean}
  */
-export function causeMemberMatchesFactMember(causeMember, factMember) {
-  return causeMember === factMember || causeMember.indexOf('?') === 0;
+export function causeMemberMatchesFactMember(causeMember: Term, factMember: Term) {
+  return causeMember.equals(factMember) || causeMember.termType === 'Variable';
 }
 
 /**
@@ -68,26 +63,11 @@ export function minus(set1: any[], set2: any[]) {
   return set1.filter((fact) => !(`${fact}` in hash));
 }
 
-/**
- * Checks if a string is a variable,
- * @param str
- * @returns {boolean}
- */
-export function isVariable(str) {
-  try {
-    return (str.indexOf('?') === 0);
-  } catch (e) {
-    return false;
-  }
-}
-
 export function addAlternativeDerivationAsCausedByFromExplicit(kb, { consequences }, altFact) {
-  const derivations = consequences;
-
-  for (let i = 0; i < derivations.length; i++) {
-    derivations[i].causedBy = Utils.insertUnique(derivations[i].causedBy, [altFact]);
-    for (let j = 0; j < derivations[i].consequences.length; j++) {
-      addAlternativeDerivationAsCausedByFromExplicit(kb, derivations[i].consequences[j], altFact);
+  for (const derivation of consequences) {
+    derivation.causedBy = Utils.insertUnique(derivation.causedBy, [altFact]);
+    for (const consequence of derivation.consequences) {
+      addAlternativeDerivationAsCausedByFromExplicit(kb, consequence, altFact);
     }
   }
 }
@@ -95,37 +75,32 @@ export function addAlternativeDerivationAsCausedByFromExplicit(kb, { consequence
 export function buildCauses(conjunction: Fact[]) {
   const explicitFacts = conjunction.filter((fact) => fact.explicit);
   const implicitFacts = conjunction.filter((fact) => !fact.explicit);
-  let combinedImplicitCauses;
-  const builtCauses = [];
 
-  if (implicitFacts.length > 0) {
-    combinedImplicitCauses = combineImplicitCauses(implicitFacts);
-    if (explicitFacts.length > 0) {
-      for (let i = 0; i < combinedImplicitCauses.length; i++) {
-        for (let j = 0; j < explicitFacts.length; j++) {
-          builtCauses.push(Utils.insertUnique(combinedImplicitCauses[i], explicitFacts[j]));
-        }
-      }
-      return builtCauses;
+  if (implicitFacts.length === 0) return [conjunction];
+
+  const combinedImplicitCauses = combineImplicitCauses(implicitFacts);
+  if (explicitFacts.length === 0) return combinedImplicitCauses;
+
+  const builtCauses = [];
+  for (const implicitCause of combinedImplicitCauses) {
+    for (const explicitFact of explicitFacts) {
+      builtCauses.push(Utils.insertUnique(implicitCause, explicitFact));
     }
-    return combinedImplicitCauses;
   }
-  return [conjunction];
+  return builtCauses;
 }
 
-export function addConsequences(facts, consequences) {
+export function addConsequences(facts: Fact[], consequences: Fact[]) {
   for (const fact of facts) {
     if (!fact.explicit) {
       fact.consequences = fact.consequences.concat(consequences);
-      for (const consequence of consequences) {
-        consequence.__propagate__ = fact;
-      }
     }
   }
 }
 
 export function combineImplicitCauses(implicitFacts) {
   let combination = implicitFacts[0].causedBy;
+  // TODO; double check this shouldn't start from 1
   for (const { causedBy } of implicitFacts) {
     combination = this.disjunctCauses(combination, causedBy);
   }
@@ -146,28 +121,31 @@ export function disjunctCauses(prev, next) {
   return disjunction;
 }
 
-export function parseRules(strRuleList: string[], entailment = Rule.types.CUSTOM): Rule[] {
-  return strRuleList.map((rule) => {
-    const match = rule.match('(.+)=(.+)');
-    return match ? parseRule(match[2], match[1], entailment) : parseRule(rule, null, entailment);
-  });
+export function parseRules(strRuleList: string[]): Rule[] {
+  return strRuleList.map((rule) => parseRule(rule.match('(.+)=(.+)')?.[2] ?? rule));
 }
 
-export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {
-  const bodyTriples = strRule.split('->')[1].match(RegularExpressions.TRIPLE);
-  const headTriples = strRule.split('->')[0].match(RegularExpressions.TRIPLE);
-
+export function parseRule(strRule: string) {
+  const [head, body] = strRule.split('->');
   return new Rule(
-    _createFactSetFromTriples(headTriples),
-    _createFactSetFromTriples(bodyTriples), name, entailment,
+    _createFactSetFromTriples(head.match(RegularExpressions.TRIPLE)),
+    _createFactSetFromTriples(body.match(RegularExpressions.TRIPLE)),
   );
 }
 
-export function _createFactSetFromTriples(triples) {
-  const set: Fact[] = [];
-  if (triples[0] === 'false') {
+export function _createFactSetFromTriples(triples: string[]) {
+  if (triples[0] === 'false') return [new Fact(false)];
+  return triples.map((triple) => {
+    const term = stringToTerm(triple);
+    if (term.termType !== 'Quad') throw new Error('Triple expected when parsing rules');
+    return new Fact(term)
+  })
+  
+  {
     set.push(new Fact(false));
-  } else {
+  }
+  
+  else {
     for (const triple of triples) {
       const atoms = triple.match(RegularExpressions.ATOM).splice(1).map(
         (atom) => (atom.match(RegularExpressions.PREFIXED_URI)
@@ -175,21 +153,13 @@ export function _createFactSetFromTriples(triples) {
             atom, atom.match(RegularExpressions.PREFIXED_URI)[1],
           ) : atom),
       );
-
+      stringToTerm
       set.push(new Fact(atoms[1], atoms[0], atoms[2]));
     }
   }
   return set;
 }
 
-export function isBNode(elem) {
-  return ((elem !== undefined) && (elem.indexOf('__bnode__') === 0));
-}
-
-export function skolemize(facts, elem) {
-  let skolem = '';
-  for (let i = 0; i < facts.length; i++) {
-    skolem += facts[i].asString;
-  }
-  return md5(skolem) + elem;
+export function skolemize(facts: Fact[], { value }: Term) {
+  return md5(facts.reduce((str, fact) => `${str}${fact}`, '')) + value;
 }

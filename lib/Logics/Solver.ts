@@ -1,7 +1,10 @@
+/* eslint-disable max-len */
 /**
  * Created by pc on 27/01/2016.
  */
 
+import type { Quad, Term } from 'rdf-js';
+import { quad } from '@rdfjs/data-model';
 import Fact from './Fact';
 import * as Logics from './Logics';
 import * as Utils from '../Utils';
@@ -18,7 +21,7 @@ import Rule from './Rule';
 * @param facts
 * @returns Array of the evaluation.
 */
-export async function evaluateRuleSet(rs, facts: Fact[], doTagging = false) {
+export async function evaluateRuleSet(rs, facts: Fact[] | IterableIterator<Fact>, doTagging = false) {
   const promises = [];
   for (const key in rs) {
     if (doTagging) {
@@ -27,7 +30,7 @@ export async function evaluateRuleSet(rs, facts: Fact[], doTagging = false) {
       promises.push(evaluateThroughRestriction(rs[key], facts));
     }
   }
-  return { cons: [].concat(...await Promise.all(promises)) };
+  return [].concat(...await Promise.all(promises));
 }
 
 /**
@@ -37,7 +40,7 @@ export async function evaluateRuleSet(rs, facts: Fact[], doTagging = false) {
 * @param facts
 * @returns {Array}
 */
-export async function evaluateThroughRestriction(rule: Rule, facts: Fact[]) {
+export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | IterableIterator<Fact>) {
   const mappingList = getMappings(rule, facts); const consequences = [];
 
   checkOperators(rule, mappingList);
@@ -62,19 +65,15 @@ export async function evaluateThroughRestriction(rule: Rule, facts: Fact[]) {
 export function evaluateThroughRestrictionWithTagging(rule, kb) {
   const mappingList = getMappings(rule, kb);
   const consequences = [];
-  let consequence;
-  let causes;
-  let iterationConsequences;
 
   checkOperators(rule, mappingList);
 
   for (let i = 0; i < mappingList.length; i++) {
     if (mappingList[i]) {
       // Replace mappings on all consequences
-      causes = Logics.buildCauses(mappingList[i].__facts__);
-      iterationConsequences = [];
+      const iterationConsequences = [];
       for (let j = 0; j < rule.consequences.length; j++) {
-        consequence = substituteFactVariables(mappingList[i], rule.consequences[j], causes, rule);
+        const consequence = substituteFactVariables(mappingList[i], rule.consequences[j], Logics.buildCauses(mappingList[i].__facts__));
         consequences.push(consequence);
         iterationConsequences.push(consequence);
       }
@@ -113,13 +112,11 @@ export function checkOperators(rule, mappingList) {
   }
 }
 
-export function getMappings(rule, facts) {
+export function getMappings(rule: Rule, facts: Fact[] | IterableIterator<Fact>) {
   let mappingList = [rule.causes[0]]; // Init with first cause
 
   for (let i = 0; i < rule.causes.length; i++) {
-    mappingList = substituteNextCauses(
-      mappingList, rule.causes[i + 1], facts, rule.constants, rule,
-    );
+    mappingList = substituteNextCauses(mappingList, rule.causes[i + 1], facts);
   }
   return mappingList;
 }
@@ -133,7 +130,7 @@ export function getMappings(rule, facts) {
 * @param facts
 * @returns {Array}
 */
-export function substituteNextCauses(currentCauses, nextCause, facts, constants, rule) {
+export function substituteNextCauses(currentCauses: Fact[], nextCause: Fact, facts: Fact[] | IterableIterator<Fact>) {
   const substitutedNextCauses = []; const mappings = [];
 
   for (let i = 0; i < currentCauses.length; i++) {
@@ -154,7 +151,7 @@ export function substituteNextCauses(currentCauses, nextCause, facts, constants,
         // If there are other causes to be checked...
         if (nextCause) {
           // Substitute the next cause's variable with the new mapping
-          substitutedNextCause = substituteFactVariables(newMapping, nextCause, [], rule);
+          substitutedNextCause = substituteFactVariables(newMapping, nextCause, []);
           substitutedNextCause.mapping = newMapping;
           substitutedNextCauses.push(substitutedNextCause);
         } else {
@@ -175,19 +172,13 @@ export function substituteNextCauses(currentCauses, nextCause, facts, constants,
 * @param mapping
 * @returns {*}
 */
-export function factMatches(fact, { predicate, object, subject }, mapping) {
+export function factMatches(fact: Fact, { quad: term }: Fact, mapping) {
   const localMapping = {};
 
   // Checks and update localMapping if matches
-  if (!factElemMatches(fact.predicate, predicate, mapping, localMapping)) {
-    return false;
-  }
-  if (!factElemMatches(fact.object, object, mapping, localMapping)) {
-    return false;
-  }
-  if (!factElemMatches(fact.subject, subject, mapping, localMapping)) {
-    return false;
-  }
+  if (!term || !fact.quad || !factElemMatches(fact.quad.predicate, term.predicate, mapping, localMapping)
+  || !factElemMatches(fact.quad.object, term.object, mapping, localMapping)
+  || !factElemMatches(fact.quad.subject, term.subject, mapping, localMapping)) return false;
 
   // If an already existing uri has been mapped...
   // Merges local and global mapping
@@ -196,9 +187,7 @@ export function factMatches(fact, { predicate, object, subject }, mapping) {
       localMapping[mapKey] = Utils.uniques(mapping[mapKey], [fact]);
     } else {
       for (const key in localMapping) {
-        if (mapping[mapKey] === localMapping[key] && mapKey !== key) {
-          return false;
-        }
+        if (mapping[mapKey] === localMapping[key] && mapKey !== key) return false;
       }
       localMapping[mapKey] = mapping[mapKey];
     }
@@ -208,17 +197,12 @@ export function factMatches(fact, { predicate, object, subject }, mapping) {
   return localMapping;
 }
 
-export function factElemMatches(factElem, causeElem, globalMapping, localMapping) {
-  if (causeElem.indexOf('?') === 0) {
-    if (globalMapping[causeElem] && (globalMapping[causeElem] !== factElem)) {
-      return false;
-    }
-    localMapping[causeElem] = factElem;
-  } else if (factElem !== causeElem) {
-    return false;
+export function factElemMatches(factElem: Term, causeElem: Term, globalMapping, localMapping) {
+  if (causeElem.termType === 'Variable') {
+    if (globalMapping[causeElem.value] && !(globalMapping[causeElem.value].equals(factElem))) return false;
+    localMapping[causeElem.value] = factElem;
   }
-
-  return true;
+  return factElem.equals(causeElem);
 }
 
 /**
@@ -227,14 +211,9 @@ export function factElemMatches(factElem, causeElem, globalMapping, localMapping
 * @param mapping
 * @returns {*}
 */
-export function substituteElementVariablesWithMapping(elem, mapping) {
-  if (Logics.isBNode(elem)) {
-    return Logics.skolemize(mapping.__facts__, elem);
-  } if (Logics.isVariable(elem)) {
-    if (mapping[elem] !== undefined) {
-      return mapping[elem];
-    }
-  }
+export function substitute(elem: Term, mapping) {
+  if (elem.termType === 'BlankNode') return Logics.skolemize(mapping.__facts__, elem);
+  if (elem.termType === 'Variable' && elem.value in mapping) return mapping[elem.value];
   return elem;
 }
 
@@ -244,29 +223,16 @@ export function substituteElementVariablesWithMapping(elem, mapping) {
 * @param mapping
 * @param notYetSubstitutedFact
 * @param causedBy
-* @param rule
 * @returns {*}
 */
-export function substituteFactVariables(mapping, notYetSubstitutedFact, causedBy, rule) {
-  if (mapping === {}) {
-    return notYetSubstitutedFact;
-  }
-  const subject = substituteElementVariablesWithMapping(notYetSubstitutedFact.subject, mapping);
-  const predicate = substituteElementVariablesWithMapping(notYetSubstitutedFact.predicate, mapping);
-  const object = substituteElementVariablesWithMapping(notYetSubstitutedFact.object, mapping);
-  // @ts-ignore
-  const substitutedFact = new Fact(predicate, subject, object, [], false);
-
-  if (causedBy) {
-    substitutedFact.causedBy = causedBy;
-    substitutedFact.explicit = false;
-  }
-
-  return substitutedFact;
-
-  // if (rule) {
-  //   substitutedFact.rule = rule;
-  // }
-
-  // return substitutedFact;
+export function substituteFactVariables(mapping, notYetSubstitutedFact: Fact, causedBy: Fact[][]) {
+  const { quad: term } = notYetSubstitutedFact;
+  if (mapping === {} || !term) return notYetSubstitutedFact;
+  return new Fact(
+    quad<Quad>(
+      substitute(term.subject, mapping),
+      substitute(term.predicate, mapping),
+      substitute(term.object, mapping),
+    ), !causedBy, causedBy,
+  );
 }

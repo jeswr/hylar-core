@@ -13,8 +13,6 @@ import Fact from './Fact';
  * @constructor
  */
 export default class Rule {
-  name: any;
-
   causes: Fact[];
 
   operatorCauses: any[];
@@ -23,21 +21,11 @@ export default class Rule {
 
   constants: any[];
 
-  dependentRules: any[];
-
-  matches: {};
-
-  type: string;
-
-  constructor(slf, srf, name, ruleType = Rule.types.CUSTOM) {
-    this.name = name;
+  constructor(slf, srf) {
     this.causes = [];
     this.operatorCauses = [];
     this.consequences = srf;
     this.constants = [];
-    this.dependentRules = [];
-    this.matches = {};
-    this.type = ruleType;
 
     for (const s of slf) {
       if (!s.operatorPredicate) {
@@ -82,35 +70,18 @@ export default class Rule {
    * The least a cause have variables, the most it is restrictive.
    */
   orderCausesByMostRestrictive() {
-    const orderedCauses = [];
-    let totalConstantOccurences = [];
-
-    for (const { quad } of this.causes) {
+    this.causes = this.causes.map((cause) => {
+      const { quad } = cause;
       let constantOccurences = 0;
-      if (!cause.subject.startsWith('?')) {
-        constantOccurences++;
+      if (quad) {
+        if (quad.subject.termType === 'Variable') constantOccurences += 1;
+        if (quad.predicate.termType === 'Variable') constantOccurences += 1;
+        if (quad.object.termType === 'Variable') constantOccurences += 1;
       }
-      if (!cause.predicate.startsWith('?')) {
-        constantOccurences++;
-      }
-      if (!cause.object.startsWith('?')) {
-        constantOccurences++;
-      }
-      totalConstantOccurences.push({
-        cause,
-        constantOccurences,
-      });
-    }
-
-    totalConstantOccurences = totalConstantOccurences.sort(
+      return { cause, constantOccurences };
+    }).sort(
       // eslint-disable-next-line no-nested-ternary
       ({ constantOccurences: x }, { constantOccurences: y }) => ((x > y) ? -1 : ((x < y) ? 1 : 0)),
-    );
-
-    for (let i = 0; i < totalConstantOccurences.length; i++) {
-      orderedCauses.push(totalConstantOccurences[i].cause);
-    }
-
-    this.causes = orderedCauses;
+    ).map(({ cause }) => cause);
   }
 }

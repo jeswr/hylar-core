@@ -74,7 +74,7 @@ export async function incremental(
 
     async function insertionEvaluationLoop() {
       FiAdd = Utils.uniques(FiAdd, FiAddNew);
-      const superSet = Utils.uniques(Utils.uniques(Utils.uniques(Fe, Fi), FeAdd), FiAdd);
+      const superSet = Utils.uniques(Fe, Fi, FeAdd, FiAdd);
       const values = await Solver.evaluateRuleSet(Logics.restrictRuleSet(R, superSet), superSet);
       FiAddNew = values.cons;
       if (!Utils.containsSubset(FiAdd, FiAddNew)) {

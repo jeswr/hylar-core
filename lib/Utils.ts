@@ -12,8 +12,8 @@ import * as RegularExpressions from './RegularExpressions';
  * @param _set2
  * @returns {Array}
  */
-export function uniques<T>(_set1: T[], _set2: T[]): T[] {
-  const hash = {}; const uniq = []; const fullSet = _set1.concat(_set2);
+export function uniques<T>(...sets: T[][]): T[] {
+  const hash = {}; const uniq = []; const fullSet = [].concat(...sets);
 
   for (let i = 0; i < fullSet.length; i++) {
     if (fullSet[i] !== undefined) hash[fullSet[i].toString()] = fullSet[i];
