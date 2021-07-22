@@ -21,8 +21,8 @@ import Rule from './Rule';
 * @param facts
 * @returns Array of the evaluation.
 */
-export async function evaluateRuleSet(rs, facts: Fact[] | IterableIterator<Fact>, doTagging = false) {
-  const promises = [];
+export async function evaluateRuleSet(rs, facts: Fact[] | IterableIterator<Fact>, doTagging = false): Promise<Fact[]> {
+  const promises: Fact[] = [];
   for (const key in rs) {
     if (doTagging) {
       promises.push(evaluateThroughRestrictionWithTagging(rs[key], facts));
@@ -62,7 +62,7 @@ export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | Ite
 * @param kb
 * @returns {Array}
 */
-export function evaluateThroughRestrictionWithTagging(rule, kb) {
+export function evaluateThroughRestrictionWithTagging(rule, kb: Fact[] | IterableIterator<Fact>) {
   const mappingList = getMappings(rule, kb);
   const consequences = [];
 

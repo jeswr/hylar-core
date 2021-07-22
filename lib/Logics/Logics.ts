@@ -1,13 +1,11 @@
 import md5 from 'md5';
 import type { Term } from 'rdf-js';
+import { stringToTerm } from 'rdf-string-ttl';
 import Rule from './Rule';
 
 import Fact from './Fact';
 import * as Utils from '../Utils';
 import * as RegularExpressions from '../RegularExpressions';
-import * as Prefixes from '../Prefixes';
-import { stringQuadToQuad } from 'rdf-string';
-import { stringToTerm } from 'rdf-string-ttl';
 
 /**
  * Returns a restricted rule set,
@@ -19,10 +17,10 @@ import { stringToTerm } from 'rdf-string-ttl';
  */
 export function restrictRuleSet(rs: Rule[], fs: IterableIterator<Fact> | Fact[]) {
   return rs.filter(({ causes }) => causes.some((cause) => {
-    for (const fact of fs) { 
+    for (const fact of fs) {
       if (causeMatchesFact(cause, fact)) return true;
     }
-    return false
+    return false;
   }));
 }
 
@@ -81,7 +79,7 @@ export function buildCauses(conjunction: Fact[]) {
   const combinedImplicitCauses = combineImplicitCauses(implicitFacts);
   if (explicitFacts.length === 0) return combinedImplicitCauses;
 
-  const builtCauses = [];
+  const builtCauses: Fact[] = [];
   for (const implicitCause of combinedImplicitCauses) {
     for (const explicitFact of explicitFacts) {
       builtCauses.push(Utils.insertUnique(implicitCause, explicitFact));
@@ -138,26 +136,8 @@ export function _createFactSetFromTriples(triples: string[]) {
   return triples.map((triple) => {
     const term = stringToTerm(triple);
     if (term.termType !== 'Quad') throw new Error('Triple expected when parsing rules');
-    return new Fact(term)
-  })
-  
-  {
-    set.push(new Fact(false));
-  }
-  
-  else {
-    for (const triple of triples) {
-      const atoms = triple.match(RegularExpressions.ATOM).splice(1).map(
-        (atom) => (atom.match(RegularExpressions.PREFIXED_URI)
-          ? Prefixes.replacePrefixWithUri(
-            atom, atom.match(RegularExpressions.PREFIXED_URI)[1],
-          ) : atom),
-      );
-      stringToTerm
-      set.push(new Fact(atoms[1], atoms[0], atoms[2]));
-    }
-  }
-  return set;
+    return new Fact(term);
+  });
 }
 
 export function skolemize(facts: Fact[], { value }: Term) {
