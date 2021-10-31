@@ -30,7 +30,7 @@ export function quadToFact(t: Quad, explicit = true): Fact {
     termToString(t.object),
     [],
     explicit,
-    t.graph.value ? [t.graph] : [],
+    t.graph.value ? [termToString(t.graph)] : [],
   );
 }
 
