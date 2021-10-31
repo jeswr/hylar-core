@@ -5,7 +5,13 @@ import { factsToQuads, quadsToFacts } from '../lib';
 const parser = new Parser({ format: 'text/n3' });
 const quads = parser.parse(`
 @prefix : <#>.
-{ :subject :predicate :object } = :graph.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+{ 
+  :subject a :object.
+  :object owl:subClassOf :namedGraphClass.
+} = :graph.
+:defaultGraphSubject a :object.
+:object owl:subClassOf :defaultGraphClass.
 `);
 
 describe('quadToFacts tests', () => {
