@@ -61,9 +61,7 @@ describe('Store integration tests', () => {
 
   // TODO: Merge quads into appropriate graphs format
   it('should work', async () => {
-    const r = await ReasoningEngine.incremental(
-      quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), namedNode('http://example.org/mammal'))]), [], quadsToFacts(storeExplicit.getQuads(null, null, null, null)), [], rules,
-    );
+    const r = await ReasoningEngine.incremental(quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), namedNode('http://example.org/mammal'))]), [], quadsToFacts(storeExplicit.getQuads(null, null, null, null)), [], rules);
 
     const { implicit, explicit } = factsToQuads(r.additions);
     storeImplicit.addQuads(implicit);
@@ -73,9 +71,7 @@ describe('Store integration tests', () => {
   });
 
   it('should handle literals', async () => {
-    const r = await ReasoningEngine.incremental(
-      quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), literal('This is a string'))]), [], [], [], rules,
-    );
+    const r = await ReasoningEngine.incremental(quadsToFacts([quad(namedNode('http://example.org/dog'), namedNode('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), literal('This is a string'))]), [], [], [], rules);
 
     const { explicit } = factsToQuads(r.additions);
     expect(explicit[0].object.termType).toEqual('Literal');

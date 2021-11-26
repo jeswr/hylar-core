@@ -48,9 +48,15 @@ export default class Fact {
     rule: any;
 
     constructor(
-      pred, sub?, obj?,
-      causes = [], expl = true, graphs = [],
-      consequences = [], notUsingValidity?, fromTriple?,
+      pred,
+      sub?,
+      obj?,
+      causes = [],
+      expl = true,
+      graphs = [],
+      consequences = [],
+      notUsingValidity?,
+      fromTriple?,
     ) {
       if (pred === 'FALSE') {
         this.falseFact = 'true';
@@ -215,7 +221,8 @@ export default class Fact {
       let valid;
       const causes = this.causedBy;
       let explicitFact;
-      for (let i = 0; i < causes.length; i++) {
+
+      for (let i = 0; i < causes.length; i++) { // eslint-disable-line
         valid = true;
         for (let j = 0; j < causes[i].length; j++) {
           explicitFact = causes[i][j];

@@ -10,7 +10,7 @@ import Rule from './Rule';
 import Fact from './Fact';
 import * as Utils from '../Utils';
 import * as Errors from '../Errors';
-import RegularExpressions from '../RegularExpressions';
+import RegularExpr from '../RegularExpressions';
 import Prefixes from '../Prefixes';
 
 /**
@@ -301,10 +301,12 @@ export function unifyFactSet(fs) {
       // eslint-disable-next-line no-cond-assign
       if (foundFactIndex = fs[i].appearsIn(unifiedSet)) {
         unifiedSet[foundFactIndex].causedBy = this.uniquesCausedBy(
-          fs[i].causedBy, unifiedSet[foundFactIndex].causedBy,
+          fs[i].causedBy,
+          unifiedSet[foundFactIndex].causedBy,
         );
         unifiedSet[foundFactIndex].consequences = Utils.uniques(
-          fs[i].consequences, unifiedSet[foundFactIndex].consequences,
+          fs[i].consequences,
+          unifiedSet[foundFactIndex].consequences,
         );
         fs[i].doPropagate(unifiedSet[foundFactIndex]);
       } else {
@@ -368,8 +370,8 @@ export function parseRules(strRuleList: string[], entailment = Rule.types.CUSTOM
 }
 
 export function parseRule(strRule, name = `rule-${md5(strRule)}`, entailment) {
-  const bodyTriples = strRule.split('->')[1].match(RegularExpressions.TRIPLE);
-  const headTriples = strRule.split('->')[0].match(RegularExpressions.TRIPLE);
+  const bodyTriples = strRule.split('->')[1].match(RegularExpr.TRIPLE);
+  const headTriples = strRule.split('->')[0].match(RegularExpr.TRIPLE);
 
   const causes = _createFactSetFromTriples(headTriples);
   const consequences = _createFactSetFromTriples(bodyTriples);
@@ -385,11 +387,9 @@ export function _createFactSetFromTriples(triples) {
     for (let i = 0; i < triples.length; i++) {
       const atoms = [];
 
-      for (let atom of triples[i].match(RegularExpressions.ATOM).splice(1)) {
-        if (atom.match(RegularExpressions.PREFIXED_URI)) {
-          atom = Prefixes.replacePrefixWithUri(
-            atom, atom.match(RegularExpressions.PREFIXED_URI)[1],
-          );
+      for (let atom of triples[i].match(RegularExpr.ATOM).splice(1)) {
+        if (atom.match(RegularExpr.PREFIXED_URI)) {
+          atom = Prefixes.replacePrefixWithUri(atom, atom.match(RegularExpr.PREFIXED_URI)[1]);
         }
         atoms.push(atom);
       }
