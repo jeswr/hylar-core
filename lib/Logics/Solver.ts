@@ -113,17 +113,15 @@ export function checkOperators(rule, mappingList) {
 }
 
 export function getMappings(rule, facts) {
-  let i = 0; let mappingList;
+  let i = 0; let mapList;
 
-  mappingList = [rule.causes[i]]; // Init with first cause
+  mapList = [rule.causes[i]]; // Init with first cause
 
   while (i < rule.causes.length) {
-    mappingList = substituteNextCauses(
-      mappingList, rule.causes[i + 1], facts, rule.constants, rule,
-    );
+    mapList = substituteNextCauses(mapList, rule.causes[i + 1], facts, rule.constants, rule);
     i++;
   }
-  return mappingList;
+  return mapList;
 }
 
 /**
