@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-use-before-define */
 /**
@@ -8,7 +9,6 @@ import Fact from './Logics/Fact';
 import * as Logics from './Logics/Logics';
 import Rule from './Logics/Rule';
 import * as Solver from './Logics/Solver';
-import * as Utils from './Utils';
 
 /**
  * Reasoning engine containing incremental algorithms
@@ -25,67 +25,71 @@ import * as Utils from './Utils';
  * @param R set of rules
  */
 // eslint-disable-next-line import/prefer-default-export
+
+function unionSE<T>(a: Map<string, T>, ...r: Map<string, T>[]): Map<string, T> {
+  for (const b of r) {
+    for (const key in b) a[key] = b[key];
+  }
+  return a;
+}
+
+function union<T>(...r: Map<string, T>[]): Map<string, T> {
+  return union(new Map(), ...r);
+}
+
+function add<T>(a: Map<string, T>, b: T[]): Map<string, T> {
+  for (const elem of b) a[`${elem}`] = b;
+  return a;
+}
+
+// eslint-disable-next-line import/prefer-default-export
 export async function incremental(
-  FeAdd: Fact[],
-  FeDel?: Fact[],
-  FactExplicit?: Fact[],
-  FactImplicit?: Fact[],
+  FeAdd: Map<string, Fact>,
+  FeDel?: Map<string, Fact>,
+  FactExplicit?: Map<string, Fact>,
+  FactImplicit?: Map<string, Fact>,
   R?: Rule[],
-):
-  Promise<{ additions: Fact[], deletions: Fact[] }> {
-  return new Promise((resolve) => {
-    let FiDel: Fact[] = [];
-    let FiAdd: Fact[] = [];
-    let FiDelNew: Fact[] = [];
-    let FiAddNew: Fact[] = [];
-    let Fe: Fact[] = FactExplicit;
-    let Fi: Fact[] = FactImplicit;
+): Promise<{ additions: Map<string, Fact>, deletions: Map<string, Fact> }> {
+  let size: number;
 
-    async function overDeletionEvaluationLoop() {
-      FiDel = Utils.uniques(FiDel, FiDelNew);
+  let FiDel = new Map<string, Fact>();
+  let FiAdd = new Map<string, Fact>();
+  let Fe: Map<string, Fact> = FactExplicit;
+  let Fi: Map<string, Fact> = FactImplicit;
 
-      const values = await Solver.evaluateRuleSet(
-        Logics.restrictRuleSet(R, Utils.uniques(FeDel, FiDel)),
-        Utils.uniques(Utils.uniques(Fi, Fe), FeDel),
-      );
+  let F = union(Fi, Fe);
 
-      FiDelNew = values.cons;
-      if (Utils.uniques(FiDel, FiDelNew).length > FiDel.length) {
-        await overDeletionEvaluationLoop();
-      } else {
-        Fe = Logics.minus(Fe, FeDel);
-        Fi = Logics.minus(Fi, FiDel);
-        rederivationEvaluationLoop();
-      }
+  do {
+    size = FiDel.size;
+    FiDel = add(FiDel, await Solver.evaluateRuleSet(
+      Logics.restrictRuleSet(R, union(FeDel, FiDel).values()),
+      union(F, FeDel).values(),
+    ));
+  } while (FiDel.size > size);
+
+  Fe = unionSE(Fe, FeDel); Fi = unionSE(Fi, FiDel); F = union(Fi, Fe);
+
+  do {
+    size = FiAdd.size;
+    FiAdd = add(
+      FiAdd,
+      await Solver.evaluateRuleSet(Logics.restrictRuleSet(R, FiDel.values()), F.values()),
+    );
+  } while (FiAdd.size > size);
+
+  F = unionSE(F, FeAdd);
+
+  do {
+    size = 0;
+    FiAdd = unionSE(F, FiAdd);
+    for (const rule of await Solver.evaluateRuleSet(Logics.restrictuleSet(R, F.values()), F.values())) {
+      const str = `${rule}`;
+      if (str in F) size = 1;
     }
+  } while (size > 0);
 
-    async function rederivationEvaluationLoop() {
-      FiAdd = Utils.uniques(FiAdd, FiAddNew);
-      const values = await Solver.evaluateRuleSet(
-        Logics.restrictRuleSet(R, FiDel), Utils.uniques(Fe, Fi),
-      );
-      FiAddNew = values.cons;
-      if (Utils.uniques(FiAdd, FiAddNew).length > FiAdd.length) {
-        await rederivationEvaluationLoop();
-      } else {
-        insertionEvaluationLoop();
-      }
-    }
-
-    async function insertionEvaluationLoop() {
-      FiAdd = Utils.uniques(FiAdd, FiAddNew);
-      const superSet = Utils.uniques(Fe, Fi, FeAdd, FiAdd);
-      const values = await Solver.evaluateRuleSet(Logics.restrictRuleSet(R, superSet), superSet);
-      FiAddNew = values.cons;
-      if (!Utils.containsSubset(FiAdd, FiAddNew)) {
-        await insertionEvaluationLoop();
-      } else {
-        resolve({
-          additions: Utils.uniques(FeAdd, FiAdd),
-          deletions: Utils.uniques(FeDel, FiDel),
-        });
-      }
-    }
-    overDeletionEvaluationLoop();
-  });
+  return {
+    additions: { implicit: FiAdd, explicit: FeAdd },
+    deletions: { implicit: FiDel, explicit: FeDel },
+  };
 }

@@ -15,9 +15,9 @@ import Fact from './Fact';
 export default class Rule {
   causes: Fact[];
 
-  operatorCauses: any[];
+  operatorCauses: Fact[];
 
-  consequences: any;
+  consequences: Fact[];
 
   constants: any[];
 
@@ -42,12 +42,6 @@ export default class Rule {
       this.constants = Utils.uniques(this.constants, srf[i].constants);
     }
     this.orderCausesByMostRestrictive();
-  }
-
-  static types = {
-    CUSTOM: 'CUSTOM',
-    OWL2RL: 'OWL2RL',
-    RDFS: 'RDFS',
   }
 
   /**

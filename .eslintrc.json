@@ -24,6 +24,7 @@
         "guard-for-in":"off",
         "no-param-reassign": "off",
         "no-use-before-define": "off",
-        "no-unused-vars": "off"
+        "no-unused-vars": "off",
+        "max-len": "off"
     }
 }

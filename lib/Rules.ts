@@ -8,7 +8,6 @@
  */
 
 import * as Logics from './Logics/Logics';
-import Rule from './Logics/Rule';
 
 export const rdfs = Logics.parseRules([
   'rdf1 = (?uuu ?aaa ?yyy) -> (?aaa rdf:type rdf:Property)',

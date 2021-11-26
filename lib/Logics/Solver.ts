@@ -21,15 +21,10 @@ import Rule from './Rule';
 * @param facts
 * @returns Array of the evaluation.
 */
-export async function evaluateRuleSet(rs, facts: Fact[] | IterableIterator<Fact>, doTagging = false): Promise<Fact[]> {
-  const promises: Fact[] = [];
-  for (const key in rs) {
-    if (doTagging) {
-      promises.push(evaluateThroughRestrictionWithTagging(rs[key], facts));
-    } else {
-      promises.push(evaluateThroughRestriction(rs[key], facts));
-    }
-  }
+export async function evaluateRuleSet(rules: Rule[], facts: Fact[] | IterableIterator<Fact>, doTagging = false): Promise<Fact[]> {
+  const evaluate = doTagging ? evaluateThroughRestrictionWithTagging : evaluateThroughRestriction;
+  const promises = rules.map((rule) => evaluate(rule, facts));
+
   return [].concat(...await Promise.all(promises));
 }
 
@@ -40,7 +35,7 @@ export async function evaluateRuleSet(rs, facts: Fact[] | IterableIterator<Fact>
 * @param facts
 * @returns {Array}
 */
-export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | IterableIterator<Fact>) {
+export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | IterableIterator<Fact>): Promise<Fact> {
   const mappingList = getMappings(rule, facts); const consequences = [];
 
   checkOperators(rule, mappingList);
@@ -48,7 +43,7 @@ export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | Ite
     if (mapping) {
       // Replace mappings on all consequences
       for (const r of rule.consequences) {
-        consequences.push(substituteFactVariables(mapping, r, [], rule));
+        consequences.push(substituteFactVariables(mapping, r, []));
       }
     }
   }
@@ -62,9 +57,9 @@ export async function evaluateThroughRestriction(rule: Rule, facts: Fact[] | Ite
 * @param kb
 * @returns {Array}
 */
-export function evaluateThroughRestrictionWithTagging(rule, kb: Fact[] | IterableIterator<Fact>) {
+export function evaluateThroughRestrictionWithTagging(rule: Rule, kb: Fact[] | IterableIterator<Fact>) {
   const mappingList = getMappings(rule, kb);
-  const consequences = [];
+  const consequences: Fact[] = [];
 
   checkOperators(rule, mappingList);
 
@@ -133,18 +128,10 @@ export function getMappings(rule: Rule, facts: Fact[] | IterableIterator<Fact>) 
 export function substituteNextCauses(currentCauses: Fact[], nextCause: Fact, facts: Fact[] | IterableIterator<Fact>) {
   const substitutedNextCauses = []; const mappings = [];
 
-  for (let i = 0; i < currentCauses.length; i++) {
-    for (let j = 0; j < facts.length; j++) {
-      // Get the mapping of the current cause ...
-      let { mapping } = currentCauses[i]; let substitutedNextCause;
-      // ... or build a fresh one if it does not exist
-      if (mapping === undefined) {
-        mapping = {};
-        mapping.__facts__ = [];
-      }
-
+  for (const currentCause of currentCauses) {
+    for (const fact of facts) {
       // Update the mapping using pattern matching
-      const newMapping = factMatches(facts[j], currentCauses[i], mapping);
+      const newMapping = factMatches(fact, currentCause, currentCause.mapping ?? { __facts__: [] });
 
       // If the current fact matches the current cause ...
       if (newMapping) {

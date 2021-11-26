@@ -12,7 +12,7 @@ export function quadsToFacts(terms: Quad[], explicit: boolean = true): Fact[] {
 
 export function factsToQuads(facts: Fact[]): { implicit: Quad[], explicit: Quad[] } {
   return {
-    implicit: facts.filter(fact => !fact.explicit && fact.quad).map(fact => fact.quad as Quad),
-    explicit: facts.filter(fact => fact.explicit && fact.quad).map(fact => fact.quad as Quad),
+    implicit: facts.filter((fact) => !fact.explicit && fact.quad).map((fact) => fact.quad as Quad),
+    explicit: facts.filter((fact) => fact.explicit && fact.quad).map((fact) => fact.quad as Quad),
   };
 }
