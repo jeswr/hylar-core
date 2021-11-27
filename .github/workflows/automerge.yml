@@ -1,14 +1,9 @@
 name: automerge
 
 on:
-  workflow_run:
+  check_suite:
     types:
       - completed
-    workflows:
-      # List all required workflow names here.
-      - 'Lint'
-      - 'Node.js CI'
-      - 'CodeQL'
 
 jobs:
   merge-me:
