@@ -4,14 +4,14 @@ on:
   # Trigger on Pull Requests against the master branch.
   pull_request_target:
     branches:
-      - master
+      - main
     types:
       - opened
       - synchronize
   # Trigger on Pull Requests to the master branch.
   push:
     branches:
-      - master
+      - main
 
 jobs:
   merge-me:
