@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: automerge
-        uses: "pascalgn/automerge-action@v0.13.0"
+        uses: "pascalgn/automerge-action@v0.14.0"
         with:
           MERGE_LABELS: "automerge"
           GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
