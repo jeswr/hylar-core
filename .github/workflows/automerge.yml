@@ -5,9 +5,6 @@ on:
   pull_request_target:
     branches:
       - main
-    types:
-      - opened
-      - synchronize
   # Trigger on Pull Requests to the master branch.
   push:
     branches:
