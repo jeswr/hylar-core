@@ -13,6 +13,6 @@ jobs:
     steps:
       - name: automerge
         uses: "pascalgn/automerge-action@v0.13.0"
-        env:
+        with:
           MERGE_LABELS: "automerge"
           GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
