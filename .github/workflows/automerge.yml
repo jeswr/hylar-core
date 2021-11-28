@@ -1,18 +1,38 @@
 name: automerge
+
 on:
-  pull_request:
+  # Trigger on Pull Requests against the master branch.
+  pull_request_target:
+    branches:
+      - main
     types:
-      - labeled
-  check_suite:
-    types:
-      - completed
+      - opened
+      - synchronize
+  # Trigger on Pull Requests to the master branch.
+  push:
+    branches:
+      - main
   status: {}
+
 jobs:
-  automerge:
+  merge-me:
+    name: automerge
     runs-on: ubuntu-latest
     steps:
-      - name: automerge
-        uses: "pascalgn/automerge-action@v0.13.0"
-        env:
-          MERGE_LABELS: "automerge"
-          GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
+      - # It is often a desired behavior to merge only when a workflow execution
+        # succeeds. This can be changed as needed.
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'automerge') }}
+        name: automerge
+        uses: ridedott/merge-me-action@v2
+        with:
+          # Depending on branch protection rules, a  manually populated
+          # `GITHUB_TOKEN_WORKAROUND` secret with permissions to push to
+          # a protected branch must be used. This secret can have an arbitrary
+          # name, as an example, this repository uses `DOTTBOTT_TOKEN`.
+          #
+          # When using a custom token, it is recommended to leave the following
+          # comment for other developers to be aware of the reasoning behind it:
+          #
+          # This must be used as GitHub Actions token does not support pushing
+          # to protected branches.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
