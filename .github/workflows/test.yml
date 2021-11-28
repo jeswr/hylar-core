@@ -12,5 +12,5 @@ jobs:
     steps:
       - # It is often a desired behavior to merge only when a workflow execution
         # succeeds. This can be changed as needed.
-        run: echo "Automerge ${{ github.event.label.name == 'automerge' }}, ${{ toJson(github.event) }} Success ${{ github.event.workflow_run.conclusion == 'success' }}, ${{ github.event.workflow_run.conclusion }}"
+        run: echo "Automerge ${{ contains(github.event.pull_request.labels.*.name, 'automerge') }}, ${{ toJson(github.event) }} Success ${{ github.event.workflow_run.conclusion == 'success' }}, ${{ github.event.workflow_run.conclusion }}"
  
