@@ -57,6 +57,10 @@ export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
   };
 }
 
+function nub(str: string[]) {
+  return str.filter((item, pos, self) => self.indexOf(item) === pos);
+}
+
 /**
  * Incremental reasoning which avoids complete recalculation of facts.
  * Concat is preferred over merge for evaluation purposes.
@@ -67,6 +71,108 @@ export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
  * @param R set of rules
  */
 export async function incremental(
+  FeAdd: Fact[],
+  FeDel?: Fact[],
+  FactExplicit?: Fact[],
+  FactImplicit?: Fact[],
+  R?: Rule[],
+  opts?: {
+    separateNamedInference?: boolean;
+    includeDefaultInAll?: boolean;
+  }
+): Promise<{ additions: Fact[], deletions: Fact[] }> {
+  if (opts?.separateNamedInference) {
+    const graphs = nub([].concat(...[
+      ...FeAdd,
+      ...FeDel ?? [],
+      ...FactExplicit ?? [],
+      ...FactImplicit ?? [],
+    ].map((f) => f.graphs)));
+    
+    const defaultGraph = {
+      FeAdd: FeAdd.filter((f) => f.graphs.length === 0),
+      FeDel: FeDel?.filter((f) => f.graphs.length === 0),
+      FactExplicit: FactExplicit?.filter((f) => f.graphs.length === 0),
+      FactImplicit: FactImplicit?.filter((f) => f.graphs.length === 0),
+      graph: undefined,
+    };
+
+    console.log(graphs)
+
+    let subGraphs = graphs.map((g) => {
+      return {
+        FeAdd: FeAdd.filter((f) => f.graphs.includes(g)),
+        FeDel: FeDel?.filter((f) => f.graphs.includes(g)),
+        FactExplicit: FactExplicit?.filter((f) => f.graphs.includes(g)),
+        FactImplicit: FactImplicit?.filter((f) => f.graphs.includes(g)),
+        graph: g,
+      };
+    })
+
+    if (opts?.includeDefaultInAll) {
+      subGraphs = subGraphs.map(data => ({
+        FeAdd: [...data.FeAdd, ...defaultGraph.FeAdd],
+        FeDel: [...data.FeDel, ...defaultGraph.FeDel],
+        FactExplicit: [...data.FactExplicit, ...defaultGraph.FactExplicit],
+        FactImplicit: [...data.FactImplicit, ...defaultGraph.FactImplicit],
+        graph: data.graph,
+      }))
+    }
+
+    subGraphs.push(defaultGraph);
+
+    console.log(subGraphs)
+
+    const results = await Promise.all(subGraphs.map(async (data) => {
+      const r = await _incremental(
+        data.FeAdd,
+        data.FeDel,
+        data.FactExplicit,
+        data.FactImplicit,
+        R,
+      );
+      r.additions.forEach(fact => {
+        fact.graphs = data.graph ? [data.graph] : [];
+      })
+      r.deletions.forEach(fact => {
+        fact.graphs = data.graph ? [data.graph] : [];
+      })
+      return r;
+    }));
+
+    // console.log(JSON.stringify(results, null, 2))
+
+    const out = results.reduce((t, d) => {
+      return {
+        additions: t.additions.concat(d.additions),
+        deletions: t.deletions.concat(d.deletions),
+      };
+    }, { additions: [], deletions: [] });
+
+    console.log(JSON.stringify(out.additions.filter(x => x.graphs.length > 0), null, 2))
+
+    // return _incremental(
+    //   FeAdd,
+    //   FeDel,
+    //   FactExplicit,
+    //   FactImplicit,
+    //   R
+    // );
+  }
+
+  return _incremental(FeAdd, FeDel, FactExplicit, FactImplicit, R);
+}
+
+/**
+ * Incremental reasoning which avoids complete recalculation of facts.
+ * Concat is preferred over merge for evaluation purposes.
+ * @param FeAdd set of assertions to be added
+ * @param FeDel set of assertions to be deleted
+ * @param FactExplicit set of assertions (explicit)
+ * @param FactImplicit set of assertions (implicit)
+ * @param R set of rules
+ */
+export async function _incremental(
   FeAdd: Fact[],
   FeDel?: Fact[],
   FactExplicit?: Fact[],
