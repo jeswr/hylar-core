@@ -97,7 +97,10 @@ export async function incremental(
       graph: undefined,
     };
 
-    console.log(graphs)
+    // console.log(graphs)
+    console.log('begin default graph --------------------------------------------')
+    console.log(defaultGraph)
+    console.log('end default graph --------------------------------------------')
 
     let subGraphs = graphs.map((g) => {
       return {
@@ -124,6 +127,18 @@ export async function incremental(
     console.log(subGraphs)
 
     const results = await Promise.all(subGraphs.map(async (data) => {
+      data.FeAdd.forEach(fact => {
+        fact.graphs = [];
+      })
+      data.FeDel.forEach(fact => {
+        fact.graphs = [];
+      })
+      data.FactExplicit.forEach(fact => {
+        fact.graphs = [];
+      })
+      data.FactImplicit.forEach(fact => {
+        fact.graphs = [];
+      })
       const r = await _incremental(
         data.FeAdd,
         data.FeDel,
@@ -149,8 +164,8 @@ export async function incremental(
       };
     }, { additions: [], deletions: [] });
 
-    console.log(JSON.stringify(out.additions.filter(x => x.graphs.length > 0), null, 2))
-
+    // console.log(JSON.stringify(out.additions.filter(x => x.graphs.length > 0), null, 2))
+    return out;
     // return _incremental(
     //   FeAdd,
     //   FeDel,
