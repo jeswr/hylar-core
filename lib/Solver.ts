@@ -1,11 +1,8 @@
-/* eslint-disable max-len */
-/**
- * Created by pc on 27/01/2016.
- */
-
 import type { Quad, Term } from '@rdfjs/types';
 import { quad, blankNode } from '@rdfjs/data-model';
 import { Rule } from './Rule';
+
+interface Mapping { [key: string]: Term }
 
 /**
 * Evaluates a set of rules over a set of facts.
@@ -15,7 +12,7 @@ import { Rule } from './Rule';
 */
 export async function evaluateRuleSet(rules: Rule[], quads: Quad[]): Promise<Quad[]> {
   const promises = rules.map((rule) => evaluateThroughRestriction(rule, quads));
-  return [].concat(...await Promise.all(promises));
+  return ([] as Quad[]).concat(...await Promise.all(promises));
 }
 
 /**
@@ -30,7 +27,7 @@ export async function evaluateThroughRestriction(rule: Rule, quads: Quad[]): Pro
     if (!rule.conclusion) {
       throw new Error('Inconsistent database');
     }
-    return rule.conclusion.map((q) => substituteFactVariables(mapping, q));
+    return rule.conclusion.map((q) => substituteQuad(mapping, q));
   })
 }
 
@@ -43,13 +40,11 @@ export function getMappings(rule: Rule, quads: Quad[]) {
   for (const nextCause of rule.premise.slice(1)) {
     const newCauses = []
     for (const currentCause of currentCauses) {
-      // const facts = dataset.match(currentCause.cause.subject, currentCause.cause.predicate, currentCause.cause.object, currentCause.cause.graph);
-  
       for (const q of quads) {
         const mapping = factMatches(q, currentCause.cause, currentCause.mapping);
         if (mapping) {
           newCauses.push({
-            cause: substituteFactVariables(mapping, nextCause),
+            cause: substituteQuad(mapping, nextCause),
             mapping,
           });
         }
@@ -59,7 +54,7 @@ export function getMappings(rule: Rule, quads: Quad[]) {
     currentCauses = newCauses
   }
 
-  return currentCauses.map((c) => c.mapping);
+  return currentCauses.map(({ mapping }) => mapping);
 }
 
 /**
@@ -70,8 +65,8 @@ export function getMappings(rule: Rule, quads: Quad[]) {
 * @param mapping
 * @returns {*}
 */
-export function factMatches(fact: Quad, term: Quad, mapping: { [key: string]: Term }) {
-  const localMapping = {};
+export function factMatches(fact: Quad, term: Quad, mapping: Mapping) {
+  const localMapping: Mapping = {};
 
   function factElemMatches(factElem: Term, causeElem: Term) {
     if (causeElem.termType === 'Variable') {
@@ -106,7 +101,7 @@ export function factMatches(fact: Quad, term: Quad, mapping: { [key: string]: Te
 * @param mapping
 * @returns {*}
 */
-export function substitute(elem: Term, mapping: { [key: string]: Term }): Term {
+export function substitute(elem: Term, mapping: Mapping): Term {
   // TODO: See if this is necessary
   if (elem.termType === 'BlankNode') return blankNode();
   if (elem.termType === 'Variable') {
@@ -118,7 +113,7 @@ export function substitute(elem: Term, mapping: { [key: string]: Term }): Term {
   return elem;
 }
 
-export function substituteFactVariables(mapping: { [key: string]: Term }, term: Quad) {
+export function substituteQuad(mapping: Mapping, term: Quad) {
   return quad(
     // @ts-ignore
     substitute(term.subject, mapping),
