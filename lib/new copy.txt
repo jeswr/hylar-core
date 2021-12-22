@@ -50,11 +50,6 @@ const hasUnion = (...hass: { match: Match }[]): RDF.Dataset['has'] => {
 }
 
 export async function incremental({ implicit, explicit, rules }: Args): Promise<void> {
-  console.log('-----------------------')
-  // matchUnion(implicit.source, explicit.source)(null, null, null, null)
-  console.log('-----------------------')
-
-
   const sourceMatch = matchUnion(implicit.source, explicit.source);
   const deletionHas = hasUnion(implicit.deletions, explicit.deletions);
   
@@ -68,8 +63,7 @@ export async function incremental({ implicit, explicit, rules }: Args): Promise<
         // TODO: Check that this doesn't need to be a 'some' like in
         // https://github.com/jeswr/hylar-core/blob/main/lib/Logics/Logics.ts
         console.log(rule.premise.map(q => { restriction(q) }))
-        // return rule.conclusion !== false && rule.premise.every(q => { restriction(q) });
-        return rule.conclusion !== false
+        return rule.conclusion !== false && rule.premise.every(q => { restriction(q) });
       })
       // console.log(3)
       const changes = evaluateRuleSet(restrictedRules, evalMatch);
@@ -82,8 +76,7 @@ export async function incremental({ implicit, explicit, rules }: Args): Promise<
   await evalLoop(deletionHas, matchUnion({ match: sourceMatch }, explicit.deletions), implicit.deletions);
 
   function sourceMatchFiltered(...args: Parameters<Match>): ReturnType<Match> {
-    return sourceMatch(...args)
-    // .filter(quad => !deletionHas(quad));
+    return sourceMatch(...args).filter(quad => !deletionHas(quad));
   }
 
   // function sourceHasFiltered(quad: RDF.Quad): boolean {
