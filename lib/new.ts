@@ -153,8 +153,12 @@ export async function incremental({ implicit, explicit, rules }: Args): Promise<
   await evalLoop(deletionHas, matchUnion({ match: sourceMatch }, explicit.deletions), implicit.deletions);
 
   function sourceMatchFiltered(...args: Parameters<Match>): ReturnType<Match> {
-    return sourceMatch(...args)
-    // .filter(quad => !deletionHas(quad));
+    return sourceMatch(...args).transform({
+      async transform(quad: RDF.Quad, done: () => void, push: (quad: RDF.Quad) => void) {
+        if 
+      }
+    })
+      // .filter(async quad => !(await deletionHas(quad)));
   }
 
   // function sourceHasFiltered(quad: RDF.Quad): boolean {
@@ -268,9 +272,6 @@ export function transformFactory(match: Match) {
 }
 
 export function getMappings(rule: Rule, match: Match) {
-  // console.log('start of getMappings')
-
-
   let currentCauses: AsyncIterator<T> = single<T>({ cause: rule.premise[0], mapping: {} })
 
   for (const nextCause of rule.premise.slice(1)) {
@@ -280,8 +281,6 @@ export function getMappings(rule: Rule, match: Match) {
       mapping
     }))
   }
-
-  // console.log('end of getMapping')
 
   return currentCauses.transform<Mapping>({ transform: transformFactory(match) });
 }
