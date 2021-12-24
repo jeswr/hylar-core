@@ -33,21 +33,40 @@ export interface Args {
 
 function matchUnion(...matchers: { match: Match }[]): Match {
   return (...args: Parameters<Match>) => {
-    // TODO: LONG TERM, remove wrap here
+    // TODO: LONG TERM, remove wrap here [should not be needed if an actual AsyncIterator is returned in the first place as opposed to the stream that is returned by the N3 store]
     return union(matchers.map(m => wrap(m.match(...args))));
   }
 }
 
-const hasUnion = (...hass: { match: Match }[]) => {
+function matchToHas(source: { match: Match }): (quad: RDF.Quad) => Promise<boolean> {
+  return (quad: RDF.Quad) => new Promise<boolean>((res, rej) => {
+    source.match(quad.subject, quad.predicate, quad.object, quad.graph)
+    .on('data', () => { res(true) })
+    .on('end', () => { res(false) })
+    .on('err', e => { rej(e) })
+  });
+}
+
+function hasUnion(...sources: { match: Match }[]): (quad: RDF.Quad) => Promise<boolean> {
   return async (quad: RDF.Quad) => {
-    return new Promise((res, rej) => {
-      hass.map(async h => {
-        h.match(quad.subject, quad.predicate, quad.object, quad.graph)
-        .on('data', () => { res(true) })
-        .on('end', () => { res(false) })
-        .on('err', e => { rej(e) })
-      });
-    });
+    for (const source of sources) {
+      if (await matchToHas(source)(quad)) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+  // return async (quad: RDF.Quad) => {
+  //   return new Promise((res, rej) => {
+  //     hass.map(async h => {
+  //       h.match(quad.subject, quad.predicate, quad.object, quad.graph)
+  //       .on('data', () => { res(true) })
+  //       .on('end', () => { res(false) })
+  //       .on('err', e => { rej(e) })
+  //     });
+  //   });
     
     
     
@@ -59,8 +78,8 @@ const hasUnion = (...hass: { match: Match }[]) => {
       //   .on('err', e => { rej(e) })
       // });
     // })
-  };
-}
+//   };
+// }
 
 export async function incremental({ implicit, explicit, rules }: Args): Promise<void> {
   // console.log('-----------------------')
@@ -87,18 +106,33 @@ export async function incremental({ implicit, explicit, rules }: Args): Promise<
   const sourceMatch = matchUnion(implicit.source, explicit.source);
   const deletionHas = hasUnion(implicit.deletions, explicit.deletions);
   
-  async function evalLoop(restriction: RDF.Dataset['has'], evalMatch: Match, dataset: { import: RDF.Dataset['import'], size: RDF.Dataset['size'] }) {
+  async function evalLoop(restriction: (quad: RDF.Quad) => Promise<boolean>, evalMatch: Match, dataset: { import: RDF.Dataset['import'], size: RDF.Dataset['size'] }) {
     // console.log(1)
     let size: number;
     do {
       size = dataset.size;
       // console.log(2)
-      const restrictedRules = fromArray(rules).filter<RestrictableRule>((rule: Rule): rule is RestrictableRule => {
+      // TODO - work out how to do promised based is signator
+      // TODO - double check this filter works properly
+      // TODO - run benchmarking on the usefulness of this particular rule restriction algorithm
+      // @ts-ignore
+      const restrictedRules = fromArray(rules).filter<RestrictableRule>(async (rule: Rule): rule is RestrictableRule => {
         // TODO: Check that this doesn't need to be a 'some' like in
         // https://github.com/jeswr/hylar-core/blob/main/lib/Logics/Logics.ts
-        rule.premise.map(q => { restriction(q) })
+        // rule.premise.map(q => { restriction(q) })
+
+        if (rule.conclusion === false) {
+          return false
+        }
+
+        for (const p of rule.premise) {
+          if (!(await restriction(p))) {
+            return false
+          }
+        }
+        
         // return rule.conclusion !== false && rule.premise.every(q => { restriction(q) });
-        return rule.conclusion !== false;
+        return true;
       })
       // console.log(3)
       const changes = evaluateRuleSet(restrictedRules, evalMatch);

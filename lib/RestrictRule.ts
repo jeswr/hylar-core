@@ -1,6 +1,8 @@
 import * as RDF from '@rdfjs/types'
-import { substitute } from '.';
+// import { substitute } from '.';
 // import { Rule } 
+
+interface Mapping { [key: string]: RDF.Term }
 
 interface Rule {
   premise: RDF.Quad[];
@@ -14,6 +16,8 @@ function termMatches(value: RDF.Term, pattern: RDF.Term) {
     || value.equals(pattern)
 }
 
+// This can be improved by ensuring that variable occurences
+// match each other similar to in in the HyLAR reasoner
 function matches(value: RDF.Quad, pattern: RDF.Quad) {
   return termMatches(value.subject, pattern.subject)
     && termMatches(value.predicate, pattern.predicate)
@@ -51,13 +55,31 @@ function restrictNaive(rules: Rule[], patterns: RDF.Quad[]): RDF.Quad[] {
 function restrictSubstitution(rules: Rule[], patterns: RDF.Quad[]) {
   let allPatterns = [...patterns];
   // For each rule, filter to only care about the *consequents* in allPatterns
-  
+
 
 }
 
-function substitute(rule: Rule, pattern: RDF.Quad) {
-  // rule.conclusion
+function getLocalMapping(quad: RDF.Quad, cause: RDF.Quad) {
+  const localMapping: Mapping = {};
 
+  function factElemMatches(factElem: RDF.Term, causeElem: RDF.Term) {
+    if (causeElem.termType === 'Variable') {
+      localMapping[causeElem.value] = factElem;
+    }
+  }
+
+  factElemMatches(quad.predicate, cause.predicate)
+  factElemMatches(quad.object, cause.object)
+  factElemMatches(quad.subject, cause.subject)
+  factElemMatches(quad.graph, cause.graph)
+
+  return localMapping;
+}
+
+function substitute(oremises: RDF.Quad[], consequent: RDF.Quad, pattern: RDF.Quad) {
+  // rule.conclusion
+  // TODOL Double check
+  const mapping = getLocalMapping(pattern, consequent)
 }
 
 // This is for (3)
@@ -73,4 +95,7 @@ function substitute(rule: Rule, pattern: RDF.Quad) {
 // (jesse a ?thing) ^ (?thing subClassOf ?thing2) -> (jesse a ?thing2)
 // Depending on the rule set the above evaluation could become quite large in and of itself - probably worthwhile running some benchmarking to see if this is a good approach
 
+// THink about things like 
+
+// Much longer term - *further* rule restriction based on multiple BGP patterns (though this may *not* be strictly necessary depending on how things like Comunica do optimisations)
 
