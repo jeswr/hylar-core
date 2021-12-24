@@ -26,6 +26,7 @@
   "author": "Jesse Wright <jesse.wright@anu.edu.au>",
   "license": "MIT",
   "devDependencies": {
+    "@graphy/memory.dataset.fast": "^4.3.4",
     "@rdfjs/types": "^1.0.1",
     "@types/asynciterator": "^3.0.0",
     "@types/jest": "^27.0.3",

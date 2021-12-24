@@ -1,0 +1,23 @@
+// import { single, fromArray } from 'asynciterator';
+// import { transformFactory, T } from '../lib/new'
+// import * as RDF from '@rdfjs/types'
+// import { namedNode, quad } from '@rdfjs/data-model';
+
+// describe('transformFactory', () => {
+//   const match = (subject: RDF.Term, predicate: RDF.Term, object: RDF.Term, graph: RDF.Term) => fromArray([])
+//   const transform = transformFactory(match);
+//   single<T>({
+//     mapping: {},
+//     cause: quad(
+//       namedNode('?x'),
+//       namedNode
+//     )
+//   })
+// })
+
+
+describe('truthy', () => {
+  it('sould be true', () => {
+    expect(true).toBe(true)
+  })
+})

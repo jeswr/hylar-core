@@ -55,7 +55,8 @@ import { Store } from 'n3';
 import { incremental } from '../lib/new'
 // import * as RDF from '@rdfjs/types'
 // import { type AsyncIterator } from 'asynciterator';
-import { namedNode, quad } from '@rdfjs/data-model';
+import { namedNode, quad, variable } from '@rdfjs/data-model';
+import {} from '@graphy/memory.dataset.fast'
 // import { Dataset } from '@rdfjs/types';
 
 // type Match = (subject: RDF.Term, predicate: RDF.Term, object: RDF.Term, graph: RDF.Term) => AsyncIterator<RDF.Quad>;
@@ -123,14 +124,14 @@ describe('Solver tests', () => {
       {
       premise: [
         quad(
-          namedNode('?s'),
+          variable('?s'),
           namedNode('a'),
-          namedNode('?o')
+          variable('?o')
         )
       ],
       conclusion: [
         quad(
-          namedNode('?o'),
+          variable('?o'),
           namedNode('a'),
           namedNode('class')
         )
@@ -138,19 +139,19 @@ describe('Solver tests', () => {
     }, {
       premise: [
         quad(
-          namedNode('?s'),
-          namedNode('?p'),
-          namedNode('?o')
+          variable('?s'),
+          variable('?p'),
+          variable('?o')
         )
       ],
       conclusion: [
         quad(
-          namedNode('?s'),
+          variable('?s'),
           namedNode('a'),
           namedNode('thing')
         ),
         quad(
-          namedNode('?o'),
+          variable('?o'),
           namedNode('a'),
           namedNode('thing')
         )
@@ -165,15 +166,27 @@ describe('Solver tests', () => {
     namedNode('Human'),
   ))
 
+  data.explicit.additions.add(quad(
+    namedNode('Bob'),
+    namedNode('a'),
+    namedNode('Human'),
+  ))
+
+  data.explicit.additions.add(quad(
+    namedNode('JOhn'),
+    namedNode('a'),
+    namedNode('Human'),
+  ))
+
   it('Should run', async () => {
     // @ts-ignore
     await incremental(data);
-    console.log(data.explicit.additions.getQuads(null, null, null, null));
+    // console.log(data.explicit.additions.getQuads(null, null, null, null));
     console.log(data.implicit.additions.getQuads(null, null, null, null));
-    console.log(data.explicit.deletions.getQuads(null, null, null, null));
-    console.log(data.implicit.deletions.getQuads(null, null, null, null));
-    console.log(data.explicit.source.getQuads(null, null, null, null));
-    console.log(data.implicit.source.getQuads(null, null, null, null));
+    // console.log(data.explicit.deletions.getQuads(null, null, null, null));
+    // console.log(data.implicit.deletions.getQuads(null, null, null, null));
+    // console.log(data.explicit.source.getQuads(null, null, null, null));
+    // console.log(data.implicit.source.getQuads(null, null, null, null));
   })
 
 

@@ -1,6 +1,7 @@
 import type * as RDF from '@rdfjs/types';
 import { quad, blankNode } from '@rdfjs/data-model';
-import { type AsyncIterator, single, union, fromArray } from 'asynciterator';
+import { type AsyncIterator, single, union, fromArray, wrap, } from 'asynciterator';
+// import { Store } from 'n3'
 
 type Match = (subject: RDF.Term, predicate: RDF.Term, object: RDF.Term, graph: RDF.Term) => AsyncIterator<RDF.Quad>;
 
@@ -32,27 +33,55 @@ export interface Args {
 
 function matchUnion(...matchers: { match: Match }[]): Match {
   return (...args: Parameters<Match>) => {
-    return union(matchers.map(m => m.match(...args)));
+    // TODO: LONG TERM, remove wrap here
+    return union(matchers.map(m => wrap(m.match(...args))));
   }
 }
 
-const hasUnion = (...hass: { match: Match }[]): RDF.Dataset['has'] => {
-  return (quad: RDF.Quad) => {
-    return hass.some(async h => {
-      return new Promise((res, rej) => {
+const hasUnion = (...hass: { match: Match }[]) => {
+  return async (quad: RDF.Quad) => {
+    return new Promise((res, rej) => {
+      hass.map(async h => {
         h.match(quad.subject, quad.predicate, quad.object, quad.graph)
         .on('data', () => { res(true) })
         .on('end', () => { res(false) })
         .on('err', e => { rej(e) })
       });
-    }) 
+    });
+    
+    
+    
+    // return hass.some(async h => {
+    //   return new Promise((res, rej) => {
+      //   h.match(quad.subject, quad.predicate, quad.object, quad.graph)
+      //   .on('data', () => { res(true) })
+      //   .on('end', () => { res(false) })
+      //   .on('err', e => { rej(e) })
+      // });
+    // })
   };
 }
 
 export async function incremental({ implicit, explicit, rules }: Args): Promise<void> {
-  console.log('-----------------------')
-  // matchUnion(implicit.source, explicit.source)(null, null, null, null)
-  console.log('-----------------------')
+  // console.log('-----------------------')
+  // const store = new Store();
+  // await new Promise<void>((res, rej) => {
+  //   store.import(matchUnion(implicit.source, explicit.source, implicit.additions, explicit.additions)(null, null, null, null))
+  //   .on('end', () => {res()})
+  //   .on('err', () => {rej()});
+  // })
+  // console.log(store.getQuads(null, null, null, null))
+
+  // return new Promise((res, rej) => {
+  //   matchUnion(implicit.source, explicit.source, implicit.additions, explicit.additions)(null, null, null, null)
+  //   .on('data', (d) => { console.log(d) })
+  //   .on('end', () => {res()})
+  //   .on('err', () => { rej() })
+  //   .read()
+    // res()
+  // })
+  // console.log('-----------------------')
+  // return;
 
 
   const sourceMatch = matchUnion(implicit.source, explicit.source);
@@ -67,14 +96,22 @@ export async function incremental({ implicit, explicit, rules }: Args): Promise<
       const restrictedRules = fromArray(rules).filter<RestrictableRule>((rule: Rule): rule is RestrictableRule => {
         // TODO: Check that this doesn't need to be a 'some' like in
         // https://github.com/jeswr/hylar-core/blob/main/lib/Logics/Logics.ts
-        console.log(rule.premise.map(q => { restriction(q) }))
+        rule.premise.map(q => { restriction(q) })
         // return rule.conclusion !== false && rule.premise.every(q => { restriction(q) });
-        return rule.conclusion !== false
+        return rule.conclusion !== false;
       })
       // console.log(3)
       const changes = evaluateRuleSet(restrictedRules, evalMatch);
       // console.log(4)
-      await dataset.import(changes);
+      // await dataset.import(changes);
+      // TODO: Change (this is temporary and hacky)
+      await new Promise<void>((res, rej) => {
+        dataset.import(changes)
+        // @ts-ignore
+        .on('end', () => {res()})
+        // @ts-ignore
+        .on('err', () => {rej()});
+      })
       // console.log(5)
     } while (dataset.size > size);
   }
@@ -106,26 +143,66 @@ export function evaluateThroughRestriction(rule: RestrictableRule, match: Match)
   // This can be done in parallel
   return getMappings(rule, match).transform({
     transform(mapping, done, push) {
+      // console.log('evaluateThroughRestrictionTransform')
       rule.conclusion.forEach(quad => { push(substituteQuad(mapping, quad)) });
       done();
     }
   })
 }
 
-interface T {
+export interface T {
   cause: RDF.Quad,
   mapping: Mapping
 }
 
-export function getMappings(rule: Rule, match: Match) {
-  console.log('start of getMappings')
-  function transform({ cause, mapping }: T, done: () => void, push: (mapping: Mapping) => void) {
+// export function transformFactory(match: Match) {
+//   return function transform({ cause, mapping }: T, done: () => void, push: (mapping: Mapping) => void) {
+
+//     // const unVar = (term: RDF.Term) => term.termType === 'Variable' && term.value in mapping ? mapping[term.value] : term;
+//     const unVar = (term: RDF.Term) => term.termType === 'Variable' ? mapping[term.value] : term;
+
+//     // This can be done in parallel
+//     match(unVar(cause.subject), unVar(cause.predicate), unVar(cause.object), unVar(cause.graph)).forEach(quad => {
+//       const localMapping: Mapping = {};
+
+//       function factElemMatches(factElem: RDF.Term, causeElem: RDF.Term) {
+//         if (causeElem.termType === 'Variable') {
+//           localMapping[causeElem.value] = factElem;
+//         }
+//       }
+    
+//       factElemMatches(quad.predicate, cause.predicate)
+//       factElemMatches(quad.object, cause.object)
+//       factElemMatches(quad.subject, cause.subject)
+//       factElemMatches(quad.graph, cause.graph)
+    
+//       // If an already existing uri has been mapped...
+//       // Merges local and global mapping
+//       for (const mapKey in mapping) {
+//         for (const key in localMapping) {
+//           // This is horribly innefficient, allow lookup in rev direction
+//           if (mapping[mapKey] === localMapping[key] && mapKey !== key) return;
+//         }
+//         localMapping[mapKey] = mapping[mapKey];
+//       }
+//       console.log('about to push', localMapping, quad, cause)
+//       push(localMapping);
+//     })
+
+//     done();
+//   }
+// }
+
+export function transformFactory(match: Match) {
+  return function transform({ cause, mapping }: T, done: () => void, push: (mapping: Mapping) => void) {
 
     // const unVar = (term: RDF.Term) => term.termType === 'Variable' && term.value in mapping ? mapping[term.value] : term;
     const unVar = (term: RDF.Term) => term.termType === 'Variable' ? mapping[term.value] : term;
 
     // This can be done in parallel
-    match(unVar(cause.subject), unVar(cause.predicate), unVar(cause.object), unVar(cause.graph)).forEach(quad => {
+    const data = match(unVar(cause.subject), unVar(cause.predicate), unVar(cause.object), unVar(cause.graph))
+    
+    data.on('data', quad => {
       const localMapping: Mapping = {};
 
       function factElemMatches(factElem: RDF.Term, causeElem: RDF.Term) {
@@ -148,26 +225,31 @@ export function getMappings(rule: Rule, match: Match) {
         }
         localMapping[mapKey] = mapping[mapKey];
       }
-    
+      // console.log('about to push', localMapping, quad, cause)
       push(localMapping);
     })
 
-    done();
+    data.on('end', () => { done() });
   }
+}
+
+export function getMappings(rule: Rule, match: Match) {
+  // console.log('start of getMappings')
+
 
   let currentCauses: AsyncIterator<T> = single<T>({ cause: rule.premise[0], mapping: {} })
 
   for (const nextCause of rule.premise.slice(1)) {
     // TODO: Filter out duplicate mappings if that seems like a problem
-    currentCauses = currentCauses.transform<Mapping>({ transform }).map(mapping => ({
+    currentCauses = currentCauses.transform<Mapping>({ transform: transformFactory(match) }).map(mapping => ({
       cause: substituteQuad(mapping, nextCause),
       mapping
     }))
   }
 
-  console.log('end of getMapping')
+  // console.log('end of getMapping')
 
-  return currentCauses.transform<Mapping>({ transform });
+  return currentCauses.transform<Mapping>({ transform: transformFactory(match) });
 }
 
 export function substitute(elem: RDF.Term, mapping: Mapping): RDF.Term {
@@ -191,3 +273,7 @@ export function substituteQuad(mapping: Mapping, term: RDF.Quad) {
     substitute(term.graph, mapping),
   );
 }
+
+// Easy ways to improve hylar
+// (1) consider shared premises and re-use mappings
+// (2) 
