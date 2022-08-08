@@ -59,7 +59,7 @@ export default class Rule {
     CUSTOM: 'CUSTOM',
     OWL2RL: 'OWL2RL',
     RDFS: 'RDFS',
-  }
+  };
 
   /**
    * Convenient method to stringify a rule.
