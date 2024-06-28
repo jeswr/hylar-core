@@ -254,7 +254,7 @@ export function substituteElementVariablesWithMapping(elem, mapping) {
 * @returns {*}
 */
 export function substituteFactVariables(mapping, notYetSubstitutedFact, causedBy, rule) {
-  if (mapping === {}) {
+  if (Object.keys(mapping).length === 0) {
     return notYetSubstitutedFact;
   }
   const subject = substituteElementVariablesWithMapping(notYetSubstitutedFact.subject, mapping);
