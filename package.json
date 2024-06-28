@@ -23,7 +23,7 @@
     "Reasoner",
     "HyLAR"
   ],
-  "author": "Jesse Wright <jesse.wright@anu.edu.au>",
+  "author": "Jesse Wright <https://github.com/jeswr/>",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^28.1.6",
