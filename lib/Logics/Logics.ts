@@ -280,7 +280,7 @@ export function disjunctCauses(prev, next) {
   let conjunction;
   const disjunction = [];
 
-  if ((prev === []) || (next === [])) {
+  if (prev.length === 0 || next.length === 0) {
     throw Errors.OrphanImplicitFact();
   }
 

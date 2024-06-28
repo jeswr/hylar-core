@@ -1,19 +1,19 @@
+name: Enable automerge on dependabot PRs
 
-name: automerge
 on:
-  pull_request:
-    types:
-      - labeled
-  check_suite:
-    types:
-      - completed
-  status: {}
+  pull_request_target:
+
 jobs:
   automerge:
+    name: Enable automerge on dependabot PRs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    if: github.actor == 'dependabot[bot]' && !contains(github.head_ref, 'dependabot/npm_and_yarn/swipl-wasm-')
     steps:
-      - name: automerge
-        uses: "pascalgn/automerge-action@v0.13.0"
-        env:
-          MERGE_LABELS: "automerge"
-          GITHUB_TOKEN: "${{ secrets.GH_TOKEN }}"
+      - uses: actions/checkout@v4
+      - run: gh pr merge ${{ github.event.pull_request.html_url }} --auto --squash
+    env:
+      GH_TOKEN: ${{ github.token }}

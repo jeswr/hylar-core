@@ -1,5 +1,10 @@
-:warning: Before looking at this package I would reccomend checking out my more recent reasoning work at https://github.com/comunica/comunica-feature-reasoning/, which is part of the [Comunica Engine](https://github.com/comunica/comunica) and has ongoing support via the [Comunica Association](https://comunica.dev/association/) :warning:
+:warning: :warning: :warning:
 
+Before looking at this package I would reccomend checking out my more recent reasoning work. Options include:
+ - [EYE JS](https://github.com/eyereasoner/eye-js) a WebAssembly build of the [EYE](https://github.com/eyereasoner/eye) reasoner.
+ - [Comunica Feature Reasoning](https://github.com/comunica/comunica-feature-reasoning/), which is part of the [Comunica Engine](https://github.com/comunica/comunica) and has ongoing support via the [Comunica Association](https://comunica.dev/association/)
+
+:warning: :warning: :warning:
 
 # hylar-core
 A lightweight module containing core reasoner logic from HyLAR (https://github.com/ucbl/HyLAR-Reasoner.git)
