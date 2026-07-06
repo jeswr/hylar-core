@@ -102,12 +102,12 @@ export function checkOperators(rule, mappingList) {
       operationToEvaluate = Utils.getValueFromDatatype(substitutedFact.subject)
         + substitutedFact.predicate
         + Utils.getValueFromDatatype(substitutedFact.object);
-    }
-    // TODO: REMOVE EVAL
-    // eslint-disable-next-line no-eval
-    if (!eval(operationToEvaluate)) {
-      delete mappingList[i];
-      break;
+      // TODO: REMOVE EVAL
+      // eslint-disable-next-line no-eval
+      if (!eval(operationToEvaluate)) {
+        delete mappingList[i];
+        break;
+      }
     }
   }
 }
