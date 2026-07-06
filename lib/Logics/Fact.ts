@@ -222,13 +222,15 @@ export default class Fact {
     const causes = this.causedBy;
     let explicitFact;
 
-      for (let i = 0; i < causes.length; i++) { // eslint-disable-line
+    for (let i = 0; i < causes.length; i++) {
       valid = true;
       for (let j = 0; j < causes[i].length; j++) {
         explicitFact = causes[i][j];
         valid = valid && explicitFact.valid;
       }
-      return valid;
+      if (valid) {
+        return true;
+      }
     }
     return false;
   }
