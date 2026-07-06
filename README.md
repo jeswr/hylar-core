@@ -1,6 +1,6 @@
 :warning: :warning: :warning:
 
-Before looking at this package I would reccomend checking out my more recent reasoning work. Options include:
+Before looking at this package I would recommend checking out my more recent reasoning work. Options include:
  - [EYE JS](https://github.com/eyereasoner/eye-js) a WebAssembly build of the [EYE](https://github.com/eyereasoner/eye) reasoner.
  - [Comunica Feature Reasoning](https://github.com/comunica/comunica-feature-reasoning/), which is part of the [Comunica Engine](https://github.com/comunica/comunica) and has ongoing support via the [Comunica Association](https://comunica.dev/association/)
 
@@ -8,6 +8,29 @@ Before looking at this package I would reccomend checking out my more recent rea
 
 # hylar-core
 A lightweight module containing core reasoner logic from HyLAR (https://github.com/ucbl/HyLAR-Reasoner.git)
+
+## API
+
+The main entrypoint is the `incremental` reasoner:
+
+```ts
+incremental(FeAdd, FeDel, FactExplicit, FactImplicit, R):
+  Promise<{ additions: Fact[], deletions: Fact[] }>
+```
+
+| Parameter | Description |
+| --- | --- |
+| `FeAdd` | Explicit facts to insert (e.g. `quadsToFacts(quads)`) |
+| `FeDel` | Explicit facts to delete; pass `[]` when only inserting |
+| `FactExplicit` | Explicit facts currently in the knowledge base |
+| `FactImplicit` | Implicit facts previously derived from the knowledge base (e.g. `quadsToFacts(quads, false)`) |
+| `R` | Rules to reason over: the exported `owl2rl` or `rdfs` rule sets, or custom rules built with `Logics.parseRules` |
+
+It resolves to the facts to add to the knowledge base (`additions`: the
+inserted explicit facts plus the newly derived implicit facts) and the facts
+to remove from it (`deletions`: the deleted explicit facts plus the implicit
+facts that are no longer derivable). Use `factsToQuads` to split either set
+into `{ explicit, implicit }` quads, as in the example below.
 
 ## Usage
 
@@ -47,8 +70,8 @@ ex:myShape a sh:NodeShape ;
   const { additions: shaclAdditions, deletions: shaclDeletions } = await incremental(
     quadsToFacts(shaclConstraint),
     [],
-    quadsToFacts(implicit.getQuads(null, null, null, null)),
     quadsToFacts(explicit.getQuads(null, null, null, null)),
+    quadsToFacts(implicit.getQuads(null, null, null, null), false),
     owl2rl
   );
   

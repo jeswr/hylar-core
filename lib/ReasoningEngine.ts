@@ -60,11 +60,24 @@ export async function naive(FeAdd: Fact[], FeDel: Fact[], F, R) {
 /**
  * Incremental reasoning which avoids complete recalculation of facts.
  * Concat is preferred over merge for evaluation purposes.
- * @param FeAdd set of assertions to be added
- * @param FeDel set of assertions to be deleted
- * @param FactExplicit set of assertions (explicit)
- * @param FactImplicit set of assertions (implicit)
- * @param R set of rules
+ *
+ * Runs over-deletion, rederivation and insertion evaluation loops until
+ * a fixpoint is reached, so only the consequences affected by the update
+ * are recalculated.
+ *
+ * @param FeAdd explicit facts to insert (e.g. `quadsToFacts(quads)`)
+ * @param FeDel explicit facts to delete; pass `[]` when only inserting
+ * @param FactExplicit explicit facts currently in the knowledge base
+ *  (e.g. `quadsToFacts(store.getQuads(null, null, null, null))`)
+ * @param FactImplicit implicit facts previously derived from the knowledge
+ *  base (e.g. `quadsToFacts(quads, false)`)
+ * @param R rules to reason over, e.g. the exported `owl2rl` or `rdfs`
+ *  rule sets, or custom rules built with `Logics.parseRules`
+ * @returns `additions`: the facts to add to the knowledge base (both the
+ *  inserted explicit facts and the newly derived implicit facts), and
+ *  `deletions`: the facts to remove from it (the deleted explicit facts
+ *  and the implicit facts no longer derivable). Split either set into
+ *  explicit/implicit quads with `factsToQuads`.
  */
 export async function incremental(
   FeAdd: Fact[],
