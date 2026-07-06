@@ -131,7 +131,7 @@ export default class Rule {
   }
 
   addDependentRule(rule) {
-    if (!(rule in this.dependentRules)) {
+    if (!this.dependentRules.includes(rule)) {
       this.dependentRules.push(rule);
     }
   }
