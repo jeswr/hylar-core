@@ -199,7 +199,7 @@ export function updateValidTags(kb, additions, deletions) {
   const kbMap = kb.map((x) => x.toRaw());
   let index;
   for (const addition of additions) {
-    index = kbMap.includes(addition.toRaw());
+    index = kbMap.indexOf(addition.toRaw());
     if (index !== -1) {
       if (kb[index].explicit) {
         kb[index].valid = true;
