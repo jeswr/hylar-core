@@ -271,7 +271,7 @@ export function addConsequences(facts, consequences) {
 export function combineImplicitCauses(implicitFacts) {
   let combination = implicitFacts[0].causedBy;
   for (let i = 1; i < implicitFacts.length; i++) {
-    combination = this.disjunctCauses(combination, implicitFacts[i].causedBy);
+    combination = disjunctCauses(combination, implicitFacts[i].causedBy);
   }
   return combination;
 }
@@ -300,7 +300,7 @@ export function unifyFactSet(fs) {
     if (fs[i] !== undefined) {
       // eslint-disable-next-line no-cond-assign
       if (foundFactIndex = fs[i].appearsIn(unifiedSet)) {
-        unifiedSet[foundFactIndex].causedBy = this.uniquesCausedBy(
+        unifiedSet[foundFactIndex].causedBy = uniquesCausedBy(
           fs[i].causedBy,
           unifiedSet[foundFactIndex].causedBy,
         );
@@ -339,7 +339,7 @@ export function uniquesCausedBy(cb1, cb2) {
   for (let i = 0; i < max.length; i++) {
     found = false;
     for (let j = 0; j < min.length; j++) {
-      if (this.containsFacts(min[j], max[i])) {
+      if (containsFacts(min[j], max[i])) {
         found = true;
         if (min.length !== max.length) {
           min[j] = max[i];

@@ -27,11 +27,11 @@ export function uniques(_set1, _set2) {
 }
 
 export function insertUnique(_set, val) {
-  return this.uniques(_set, [val]);
+  return uniques(_set, [val]);
 }
 
 export function containsSubset(_set1, _set2) {
-  return this.uniques(_set1, _set2).length === _set1.length;
+  return uniques(_set1, _set2).length === _set1.length;
 }
 
 /**
@@ -77,7 +77,7 @@ export function equivalentSets(s1, s2) {
     return false;
   }
   for (let i = 0; i < s1.length; i++) {
-    if (this.notInSet(s2, s1[i])) {
+    if (notInSet(s2, s1[i])) {
       return false;
     }
   }
@@ -102,9 +102,9 @@ export function emptyPromise(toBeReturned) {
 }
 
 export function tripleContainsVariable(triple) {
-  if (this.isVariable(triple.subject)
-    || this.isVariable(triple.predicate)
-    || this.isVariable(triple.object)) {
+  if (isVariable(triple.subject)
+    || isVariable(triple.predicate)
+    || isVariable(triple.object)) {
     return true;
   }
   return false;
